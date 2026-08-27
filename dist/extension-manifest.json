@@ -1,0 +1,200 @@
+{
+  "formatVersion": 1,
+  "id": "kubohiroyaar",
+  "blocks": [
+    {
+      "opcode": "arStatus",
+      "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
+      "opcode": "arTargetConfidence",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "arTargetPosition",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "AXIS",
+          "type": "STRING"
+        },
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "arTargetRotation",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "AXIS",
+          "type": "STRING"
+        },
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "attachSelectorToARTarget",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "createARScene",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CAMERA_ID",
+          "type": "STRING"
+        },
+        {
+          "id": "LAYER",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "defineARTarget",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "detachSelectorFromARTarget",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "isARSceneRunning",
+      "blockType": "BOOLEAN",
+      "arguments": []
+    },
+    {
+      "opcode": "isARTargetVisible",
+      "blockType": "BOOLEAN",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "setARTargetPosition",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "setARTargetRotation",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "setARTargetVisible",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CONFIDENCE",
+          "type": "NUMBER"
+        },
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        },
+        {
+          "id": "VISIBLE",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "opcode": "stopARScene",
+      "blockType": "COMMAND",
+      "arguments": []
+    },
+    {
+      "opcode": "whenARTargetFound",
+      "blockType": "HAT",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "whenARTargetLost",
+      "blockType": "HAT",
+      "arguments": [
+        {
+          "id": "TARGET_ID",
+          "type": "STRING"
+        }
+      ]
+    }
+  ],
+  "menus": []
+}

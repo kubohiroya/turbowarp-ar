@@ -1,0 +1,155 @@
+{
+  "extensionName": "TurboWarp-AR",
+  "blocks": [
+    {
+      "opcode": "createARScene",
+      "blockType": "COMMAND",
+      "text": "create AR scene with camera [CAMERA_ID] layer [LAYER]",
+      "description": "Starts an AR session by acquiring a shared camera-source camera lease.",
+      "arguments": {
+        "CAMERA_ID": {"type": "STRING", "defaultValue": "default"},
+        "LAYER": {"type": "STRING", "defaultValue": "above-stage"}
+      }
+    },
+    {
+      "opcode": "stopARScene",
+      "blockType": "COMMAND",
+      "text": "stop AR scene",
+      "description": "Stops the AR session and releases the shared camera lease.",
+      "arguments": {}
+    },
+    {
+      "opcode": "arStatus",
+      "blockType": "REPORTER",
+      "text": "AR status",
+      "description": "Returns the AR session status.",
+      "arguments": {}
+    },
+    {
+      "opcode": "isARSceneRunning",
+      "blockType": "BOOLEAN",
+      "text": "AR scene is running?",
+      "description": "Reports whether the AR session is running.",
+      "arguments": {}
+    },
+    {
+      "opcode": "defineARTarget",
+      "blockType": "COMMAND",
+      "text": "define AR target [TARGET_ID]",
+      "description": "Creates or resets a named AR target state.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "setARTargetVisible",
+      "blockType": "COMMAND",
+      "text": "set AR target [TARGET_ID] visible [VISIBLE] confidence [CONFIDENCE]",
+      "description": "Updates a target's visibility and confidence using the manual MVP backend.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"},
+        "VISIBLE": {"type": "BOOLEAN", "defaultValue": true},
+        "CONFIDENCE": {"type": "NUMBER", "defaultValue": 1}
+      }
+    },
+    {
+      "opcode": "setARTargetPosition",
+      "blockType": "COMMAND",
+      "text": "set AR target [TARGET_ID] position x [X] y [Y] z [Z]",
+      "description": "Updates a target's position in AR scene coordinates.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 0},
+        "Z": {"type": "NUMBER", "defaultValue": -1}
+      }
+    },
+    {
+      "opcode": "setARTargetRotation",
+      "blockType": "COMMAND",
+      "text": "set AR target [TARGET_ID] rotation x [X] y [Y] z [Z]",
+      "description": "Updates a target's Euler rotation in degrees.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 0},
+        "Z": {"type": "NUMBER", "defaultValue": 0}
+      }
+    },
+    {
+      "opcode": "isARTargetVisible",
+      "blockType": "BOOLEAN",
+      "text": "AR target [TARGET_ID] is visible?",
+      "description": "Reports whether the target is currently visible.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "arTargetConfidence",
+      "blockType": "REPORTER",
+      "text": "AR target [TARGET_ID] confidence",
+      "description": "Returns the target confidence from 0 to 1.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "arTargetPosition",
+      "blockType": "REPORTER",
+      "text": "AR target [TARGET_ID] position [AXIS]",
+      "description": "Returns one axis of the target position.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"},
+        "AXIS": {"type": "STRING", "defaultValue": "x"}
+      }
+    },
+    {
+      "opcode": "arTargetRotation",
+      "blockType": "REPORTER",
+      "text": "AR target [TARGET_ID] rotation [AXIS]",
+      "description": "Returns one axis of the target rotation.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"},
+        "AXIS": {"type": "STRING", "defaultValue": "y"}
+      }
+    },
+    {
+      "opcode": "whenARTargetFound",
+      "blockType": "HAT",
+      "text": "when AR target [TARGET_ID] found",
+      "description": "Fires once when a target transitions from hidden to visible.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "whenARTargetLost",
+      "blockType": "HAT",
+      "text": "when AR target [TARGET_ID] lost",
+      "description": "Fires once when a target transitions from visible to hidden.",
+      "arguments": {
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "attachSelectorToARTarget",
+      "blockType": "COMMAND",
+      "text": "attach selector [SELECTOR] to AR target [TARGET_ID]",
+      "description": "Synchronizes matching DOM or A-Frame nodes to an AR target pose.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "TARGET_ID": {"type": "STRING", "defaultValue": "marker-1"}
+      }
+    },
+    {
+      "opcode": "detachSelectorFromARTarget",
+      "blockType": "COMMAND",
+      "text": "detach selector [SELECTOR] from AR target",
+      "description": "Stops synchronizing a selector to any AR target.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"}
+      }
+    }
+  ]
+}

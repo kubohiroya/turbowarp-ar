@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TurboWarp-AR documentation</title>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:900px;margin:0 auto;padding:2rem;line-height:1.6;color:#222}
+    code{background:#f3f3f3;padding:.1em .3em;border-radius:.25em}
+    pre{background:#f6f8fa;padding:1rem;overflow:auto;border-radius:.5rem}
+  </style>
+</head>
+<body>
+  <h1>TurboWarp-AR</h1>
+  <p>TurboWarp-AR provides camera-source based AR session and target-state blocks for TurboWarp projects.</p>
+
+  <h2>Requirements</h2>
+  <ul>
+    <li>Load <code>turbowarp-camera-source</code> before this extension.</li>
+    <li>Enable TurboWarp's unsandboxed extension option.</li>
+    <li>Use HTTPS or another browser secure context for real camera input.</li>
+  </ul>
+
+  <h2>Quick start</h2>
+  <pre><code>create AR scene with camera [default] layer [above-stage]
+define AR target [marker-1]
+attach selector [#card] to AR target [marker-1]
+set AR target [marker-1] visible [true] confidence [1]</code></pre>
+
+  <h2>A-Frame integration</h2>
+  <p>A-Frame is optional. Attached selectors receive <code>visible</code>, <code>position</code>, <code>rotation</code>, <code>data-ar-target</code>, and <code>data-ar-confidence</code> attributes.</p>
+
+  <h2>Development</h2>
+  <p>See the repository README and architecture documentation for build, test, release, and compatibility details.</p>
+</body>
+</html>
