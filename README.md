@@ -51,6 +51,19 @@ set AR target [marker-1] position x [0] y [0] z [-1]
 
 A-Frame is optional. If an A-Frame node exists in the page, attach it by CSS selector. TurboWarp-AR writes `visible`, `position`, `rotation`, `data-ar-target`, and `data-ar-confidence` attributes to matching elements.
 
+## Plan API
+
+Applications that generate TurboWarp setup scripts can import `@kubohiroya/turbowarp-ar/plan`. The plan API does not register the extension; it only validates AR scene control data and returns the low-level TurboWarp AR calls needed to create an AR scene and bind selectors to AR targets.
+
+```ts
+import {createTurboWarpARScenePlan} from '@kubohiroya/turbowarp-ar/plan';
+
+const calls = createTurboWarpARScenePlan({
+  cameraId: 'front',
+  targets: [{targetId: 'marker-1', selector: '#card'}]
+});
+```
+
 ## Block reference
 
 <!-- BEGIN GENERATED BLOCKS -->

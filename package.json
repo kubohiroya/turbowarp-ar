@@ -23,6 +23,13 @@
     "typescript"
   ],
   "type": "module",
+  "exports": {
+    "./plan": {
+      "types": "./dist/plan.d.ts",
+      "import": "./dist/plan.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist/",
     "docs/",
@@ -44,7 +51,7 @@
   "scripts": {
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.lib.json",
     "lint": "eslint src tests vite.config.ts",
     "test": "vitest run",
     "docs": "node scripts/generate-readme.mjs",

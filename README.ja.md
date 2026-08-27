@@ -51,6 +51,19 @@ set AR target [marker-1] position x [0] y [0] z [-1]
 
 A-Frame は任意です。ページ内に A-Frame node が存在する場合、CSS selector で attach できます。TurboWarp-AR は一致した要素へ `visible`、`position`、`rotation`、`data-ar-target`、`data-ar-confidence` 属性を書き込みます。
 
+## Plan API
+
+TurboWarp の setup script を生成する app は、`@kubohiroya/turbowarp-ar/plan` を import できます。Plan API は機能拡張を登録せず、AR scene control data を検証し、AR scene の作成と AR target への selector bind に必要な低レベル TurboWarp AR call を返します。
+
+```ts
+import {createTurboWarpARScenePlan} from '@kubohiroya/turbowarp-ar/plan';
+
+const calls = createTurboWarpARScenePlan({
+  cameraId: 'front',
+  targets: [{targetId: 'marker-1', selector: '#card'}]
+});
+```
+
 ## ブロック一覧
 
 - `create AR scene with camera [CAMERA_ID] layer [LAYER]`

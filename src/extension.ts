@@ -74,6 +74,7 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   private readonly targetEvents: ARTargetEvent[] = [];
   private status: ARStatus = 'idle';
   private session: ARSession | null = null;
+  private sceneGeneration = 0;
 
   public getInfo(): Record<string, unknown> {
     return {
@@ -95,26 +96,47 @@ export class TurboWarpARExtension implements TurboWarpExtension {
 
     const cameraId = this.normalizeId(Scratch.Cast.toString(args.CAMERA_ID), 'default');
     const layer = this.normalizeLayer(Scratch.Cast.toString(args.LAYER));
+    const generation = ++this.sceneGeneration;
+    let lease: CameraLease | null = null;
+    let background: HTMLElement | null = null;
     this.status = 'starting';
 
     try {
-      const lease = await cameraSource.acquireCamera({owner: EXTENSION_OWNER, cameraId});
-      const background = this.createBackground(lease.getFrameSource(), cameraId, layer);
+      lease = await cameraSource.acquireCamera({owner: EXTENSION_OWNER, cameraId});
+      if (generation !== this.sceneGeneration) {
+        await this.releaseLease(lease);
+        return;
+      }
+
+      background = this.createBackground(lease.getFrameSource(), cameraId, layer);
+      if (generation !== this.sceneGeneration) {
+        background?.remove();
+        await this.releaseLease(lease);
+        return;
+      }
+
       this.session = {cameraId, layer, lease, background};
       this.status = 'running';
       this.syncAllAttachments();
     } catch {
-      this.status = 'camera-error';
-      this.session = null;
+      background?.remove();
+      if (lease !== null) {
+        await this.releaseLease(lease);
+      }
+      if (generation === this.sceneGeneration) {
+        this.status = 'camera-error';
+        this.session = null;
+      }
     }
   }
 
   public async stopARScene(): Promise<void> {
+    this.sceneGeneration++;
     const current = this.session;
     this.session = null;
     current?.background?.remove();
     if (current !== null) {
-      await current.lease.release();
+      await this.releaseLease(current.lease);
     }
     this.status = 'idle';
   }
@@ -251,6 +273,14 @@ export class TurboWarpARExtension implements TurboWarpExtension {
       return candidate as CameraSourceRuntime;
     }
     return null;
+  }
+
+  private async releaseLease(lease: CameraLease): Promise<void> {
+    try {
+      await lease.release();
+    } catch {
+      // Release failures should not leave Scratch-visible AR state half-updated.
+    }
   }
 
   private createBackground(
