@@ -33,6 +33,16 @@ function stubScratch(runtime: Record<string, unknown> = {}) {
   });
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return {promise, resolve, reject};
+}
+
 beforeEach(() => {
   stubScratch();
 });
@@ -95,6 +105,113 @@ describe('TurboWarpARExtension', () => {
 
     expect(release).toHaveBeenCalledOnce();
     expect(extension.arStatus()).toBe('idle');
+  });
+
+  it('releases the camera lease when frame source setup fails', async () => {
+    const release = vi.fn(async () => {});
+    stubScratch({
+      ext_kubohiroyacamerasource: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => {
+            throw new Error('missing frame');
+          },
+          release
+        }))
+      }
+    });
+    const extension = new TurboWarpARExtension();
+
+    await extension.createARScene({CAMERA_ID: 'pose', LAYER: 'above-stage'});
+
+    expect(release).toHaveBeenCalledOnce();
+    expect(extension.arStatus()).toBe('camera-error');
+    expect(extension.isARSceneRunning()).toBe(false);
+  });
+
+  it('keeps the latest AR scene when starts resolve out of order', async () => {
+    const first = deferred<{
+      getFrameSource: () => HTMLVideoElement;
+      release: () => Promise<void>;
+    }>();
+    const second = deferred<{
+      getFrameSource: () => HTMLVideoElement;
+      release: () => Promise<void>;
+    }>();
+    const firstRelease = vi.fn(async () => {});
+    const secondRelease = vi.fn(async () => {});
+    const acquireCamera = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    stubScratch({ext_kubohiroyacamerasource: {acquireCamera}});
+    const extension = new TurboWarpARExtension();
+
+    const firstStart = extension.createARScene({CAMERA_ID: 'first', LAYER: 'above-stage'});
+    const secondStart = extension.createARScene({CAMERA_ID: 'second', LAYER: 'above-stage'});
+    await Promise.resolve();
+    await Promise.resolve();
+
+    second.resolve({
+      getFrameSource: () =>
+        ({
+          kind: 'video',
+          element: {srcObject: null} as HTMLVideoElement,
+          width: 640,
+          height: 480,
+          mirrored: false,
+          deviceId: 'device-2'
+        }) as unknown as HTMLVideoElement,
+      release: secondRelease
+    });
+    await secondStart;
+
+    first.resolve({
+      getFrameSource: () =>
+        ({
+          kind: 'video',
+          element: {srcObject: null} as HTMLVideoElement,
+          width: 640,
+          height: 480,
+          mirrored: false,
+          deviceId: 'device-1'
+        }) as unknown as HTMLVideoElement,
+      release: firstRelease
+    });
+    await firstStart;
+
+    expect(firstRelease).toHaveBeenCalledOnce();
+    expect(secondRelease).not.toHaveBeenCalled();
+    expect(extension.arStatus()).toBe('running');
+    expect(extension.snapshot()).toMatchObject({session: {cameraId: 'second'}});
+  });
+
+  it('settles to idle even if camera lease release rejects', async () => {
+    const release = vi.fn(async () => {
+      throw new Error('release failed');
+    });
+    stubScratch({
+      ext_kubohiroyacamerasource: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => ({
+            kind: 'video',
+            element: {srcObject: null} as HTMLVideoElement,
+            width: 640,
+            height: 480,
+            mirrored: false,
+            deviceId: 'device-1'
+          }),
+          release
+        }))
+      }
+    });
+    const extension = new TurboWarpARExtension();
+    await extension.createARScene({CAMERA_ID: 'pose', LAYER: 'above-stage'});
+
+    await extension.stopARScene();
+
+    expect(release).toHaveBeenCalledOnce();
+    expect(extension.arStatus()).toBe('idle');
+    expect(extension.isARSceneRunning()).toBe(false);
   });
 
   it('updates manual target state and emits found and lost transitions once', () => {

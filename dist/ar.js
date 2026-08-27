@@ -28,6 +28,7 @@
       this.targetEvents = [];
       this.status = "idle";
       this.session = null;
+      this.sceneGeneration = 0;
     }
     getInfo() {
       return {
@@ -47,24 +48,43 @@
       }
       const cameraId = this.normalizeId(Scratch.Cast.toString(args.CAMERA_ID), "default");
       const layer = this.normalizeLayer(Scratch.Cast.toString(args.LAYER));
+      const generation = ++this.sceneGeneration;
+      let lease = null;
+      let background = null;
       this.status = "starting";
       try {
-        const lease = await cameraSource.acquireCamera({ owner: EXTENSION_OWNER, cameraId });
-        const background = this.createBackground(lease.getFrameSource(), cameraId, layer);
+        lease = await cameraSource.acquireCamera({ owner: EXTENSION_OWNER, cameraId });
+        if (generation !== this.sceneGeneration) {
+          await this.releaseLease(lease);
+          return;
+        }
+        background = this.createBackground(lease.getFrameSource(), cameraId, layer);
+        if (generation !== this.sceneGeneration) {
+          background?.remove();
+          await this.releaseLease(lease);
+          return;
+        }
         this.session = { cameraId, layer, lease, background };
         this.status = "running";
         this.syncAllAttachments();
       } catch {
-        this.status = "camera-error";
-        this.session = null;
+        background?.remove();
+        if (lease !== null) {
+          await this.releaseLease(lease);
+        }
+        if (generation === this.sceneGeneration) {
+          this.status = "camera-error";
+          this.session = null;
+        }
       }
     }
     async stopARScene() {
+      this.sceneGeneration++;
       const current = this.session;
       this.session = null;
       current?.background?.remove();
       if (current !== null) {
-        await current.lease.release();
+        await this.releaseLease(current.lease);
       }
       this.status = "idle";
     }
@@ -162,6 +182,12 @@
         return candidate;
       }
       return null;
+    }
+    async releaseLease(lease) {
+      try {
+        await lease.release();
+      } catch {
+      }
     }
     createBackground(source, cameraId, layer) {
       if (typeof document === "undefined") return null;
