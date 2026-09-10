@@ -46,7 +46,7 @@
   },
   "packageManager": "pnpm@11.11.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18.0"
   },
   "scripts": {
     "dev": "vite build --watch",
@@ -54,13 +54,13 @@
     "build": "vite build && tsc -p tsconfig.lib.json",
     "lint": "eslint src tests vite.config.ts",
     "test": "vitest run",
-    "docs": "node scripts/generate-readme.mjs",
+    "docs": "node scripts/generate-readme.ts",
     "docs:check": "pnpm run docs && git diff --exit-code -- README.md",
-    "template:readme": "node scripts/apply-readme-template.mjs",
-    "repo:check": "node scripts/check-repo.mjs",
+    "template:readme": "node scripts/apply-readme-template.ts",
+    "repo:check": "node scripts/check-repo.ts",
     "pack:check": "npm pack --dry-run --ignore-scripts",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run docs:check && pnpm run check:dist && pnpm run repo:check && pnpm run pack:check",
-    "check:dist": "pnpm run build && node scripts/check-dist.mjs"
+    "check:dist": "pnpm run build && node scripts/check-dist.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
