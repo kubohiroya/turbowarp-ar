@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-ar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A TurboWarp extension for camera-source based AR target state.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
