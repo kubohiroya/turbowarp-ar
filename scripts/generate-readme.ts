@@ -1,11 +1,29 @@
 import {readFile, writeFile} from 'node:fs/promises';
 
+interface BlockArgument {
+  type: string;
+  defaultValue?: string | number | boolean;
+}
+
+interface BlockDefinition {
+  opcode: string;
+  blockType: string;
+  text: string;
+  description: string;
+  arguments?: Record<string, BlockArgument>;
+}
+
+interface BlockDefinitions {
+  extensionName: string;
+  blocks: BlockDefinition[];
+}
+
 const START = '<!-- BEGIN GENERATED BLOCKS -->';
 const END = '<!-- END GENERATED BLOCKS -->';
 
 const definitions = JSON.parse(
   await readFile(new URL('../src/block-definitions.json', import.meta.url), 'utf8')
-);
+) as BlockDefinitions;
 const readmeUrl = new URL('../README.md', import.meta.url);
 const readme = await readFile(readmeUrl, 'utf8');
 
@@ -22,7 +40,7 @@ const next = readme.replace(
 );
 await writeFile(readmeUrl, next);
 
-function renderBlock(block) {
+function renderBlock(block: BlockDefinition): string {
   const rows = [
     ['Type', titleCase(block.blockType)],
     ['Opcode', `\`${block.opcode}\``]
@@ -44,14 +62,14 @@ function renderBlock(block) {
   ].join('\n');
 }
 
-function titleCase(value) {
+function titleCase(value: string): string {
   return value.charAt(0) + value.slice(1).toLowerCase();
 }
 
-function formatDefault(value) {
+function formatDefault(value: BlockArgument['defaultValue']): string {
   return String(value).replaceAll('\\', '\\\\').replaceAll('\n', '\\n').replaceAll('`', '\\`');
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

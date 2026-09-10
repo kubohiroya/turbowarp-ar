@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-ar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A TurboWarp extension for camera-source based AR target state.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -46,7 +46,7 @@
   },
   "packageManager": "pnpm@11.11.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18.0"
   },
   "scripts": {
     "dev": "vite build --watch",
@@ -54,22 +54,22 @@
     "build": "vite build && tsc -p tsconfig.lib.json",
     "lint": "eslint src tests vite.config.ts",
     "test": "vitest run",
-    "docs": "node scripts/generate-readme.mjs",
+    "docs": "node scripts/generate-readme.ts",
     "docs:check": "pnpm run docs && git diff --exit-code -- README.md",
-    "template:readme": "node scripts/apply-readme-template.mjs",
-    "repo:check": "node scripts/check-repo.mjs",
+    "template:readme": "node scripts/apply-readme-template.ts",
+    "repo:check": "node scripts/check-repo.ts",
     "pack:check": "npm pack --dry-run --ignore-scripts",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run docs:check && pnpm run check:dist && pnpm run repo:check && pnpm run pack:check",
-    "check:dist": "pnpm run build && node scripts/check-dist.mjs"
+    "check:dist": "pnpm run build && node scripts/check-dist.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@kubohiroya/vite-plugin-turbowarp-extension": "0.1.1",
+    "@kubohiroya/vite-plugin-turbowarp-extension": "0.4.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
-    "vite": "^7.3.6",
+    "vite": "^8.2.2",
     "vitest": "^4.1.10"
   }
 }
