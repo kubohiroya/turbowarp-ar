@@ -28,13 +28,13 @@ TurboWarp-AR はカメラフレームをアップロードせず、画像も保�
 `turbowarp-camera-source` を先に読み込み、その後この拡張を unsandboxed custom extension として読み込みます。
 
 ```text
-https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.1.0/dist/ar.js
+https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.2.0/dist/ar.js
 ```
 
 ローカル開発では次を使います。
 
 ```bash
-pnpm add @kubohiroya/turbowarp-ar@0.1.0
+pnpm add @kubohiroya/turbowarp-ar@0.2.0
 ```
 
 ## Quick start

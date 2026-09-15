@@ -26,8 +26,28 @@ interface CameraFrameSource {
   readonly element: HTMLVideoElement;
   readonly width: number;
   readonly height: number;
-  readonly mirrored: boolean;
+  /**
+   * How Camera Source is drawing its own preview of these frames.
+   *
+   * A flip is a rendering choice and never reaches the pixels, so the background shown here is
+   * turned over to match what the operator is already looking at rather than because the frames
+   * arrived that way.
+   */
+  readonly previewFlip: PreviewFlip;
   readonly deviceId: string;
+}
+
+/** The flip vocabulary Camera Source publishes on a frame source. */
+type PreviewFlip = 'none' | 'horizontal' | 'vertical' | 'both';
+
+/** Matches the background to the preview. An unknown value leaves the image as it arrived. */
+function backgroundTransform(flip: PreviewFlip | undefined): string {
+  const horizontal = flip === 'horizontal' || flip === 'both';
+  const vertical = flip === 'vertical' || flip === 'both';
+  if (horizontal && vertical) return 'scale(-1, -1)';
+  if (horizontal) return 'scaleX(-1)';
+  if (vertical) return 'scaleY(-1)';
+  return '';
 }
 
 interface CameraLease {
@@ -40,7 +60,7 @@ interface CameraSourceRuntime {
     owner?: string;
     cameraId?: string;
     deviceId?: string;
-    mirrored?: boolean;
+    previewFlip?: PreviewFlip;
   }): Promise<CameraLease>;
 }
 
@@ -311,7 +331,7 @@ export class TurboWarpARExtension implements TurboWarpExtension {
     video.style.width = '100%';
     video.style.height = '100%';
     video.style.objectFit = 'cover';
-    video.style.transform = source.mirrored ? 'scaleX(-1)' : '';
+    video.style.transform = backgroundTransform(source.previewFlip);
     host.append(video);
     document.body.append(host);
     void video.play();

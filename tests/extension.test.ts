@@ -87,7 +87,7 @@ describe('TurboWarpARExtension', () => {
             element: {srcObject: null} as HTMLVideoElement,
             width: 640,
             height: 480,
-            mirrored: false,
+            previewFlip: 'none',
             deviceId: 'device-1'
           }),
           release
@@ -158,7 +158,7 @@ describe('TurboWarpARExtension', () => {
           element: {srcObject: null} as HTMLVideoElement,
           width: 640,
           height: 480,
-          mirrored: false,
+          previewFlip: 'none',
           deviceId: 'device-2'
         }) as unknown as HTMLVideoElement,
       release: secondRelease
@@ -172,7 +172,7 @@ describe('TurboWarpARExtension', () => {
           element: {srcObject: null} as HTMLVideoElement,
           width: 640,
           height: 480,
-          mirrored: false,
+          previewFlip: 'none',
           deviceId: 'device-1'
         }) as unknown as HTMLVideoElement,
       release: firstRelease
@@ -197,7 +197,7 @@ describe('TurboWarpARExtension', () => {
             element: {srcObject: null} as HTMLVideoElement,
             width: 640,
             height: 480,
-            mirrored: false,
+            previewFlip: 'none',
             deviceId: 'device-1'
           }),
           release
