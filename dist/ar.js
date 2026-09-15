@@ -239,6 +239,15 @@
   };
   //#endregion
   //#region src/extension.ts
+  /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
+  function backgroundTransform(flip) {
+  	const horizontal = flip === "horizontal" || flip === "both";
+  	const vertical = flip === "vertical" || flip === "both";
+  	if (horizontal && vertical) return "scale(-1, -1)";
+  	if (horizontal) return "scaleX(-1)";
+  	if (vertical) return "scaleY(-1)";
+  	return "";
+  }
   var blockDefinitions = block_definitions_default.blocks;
   var CAMERA_SOURCE_RUNTIME_ID = "ext_kubohiroyacamerasource";
   var EXTENSION_OWNER = "turbowarp-ar";
@@ -438,7 +447,7 @@
   		video.style.width = "100%";
   		video.style.height = "100%";
   		video.style.objectFit = "cover";
-  		video.style.transform = source.mirrored ? "scaleX(-1)" : "";
+  		video.style.transform = backgroundTransform(source.previewFlip);
   		host.append(video);
   		document.body.append(host);
   		video.play();
