@@ -238,6 +238,11 @@
   	]
   };
   //#endregion
+  //#region src/plan.ts
+  var AR_SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
+  /** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
+  var DEFAULT_AR_LAYER = "above-stage";
+  //#endregion
   //#region src/extension.ts
   /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
   function backgroundTransform(flip) {
@@ -248,8 +253,27 @@
   	if (vertical) return "scaleY(-1)";
   	return "";
   }
+  /**
+  * Stacking positions for the two hosts that can share the stage.
+  *
+  * The camera background sits one step below `turbowarp-aframe`'s 3D scene host, which uses 10, so
+  * a 3D scene on the same layer always renders over the camera image. Keep the two in step when
+  * either extension changes its host stacking.
+  */
+  var AR_BACKGROUND_Z_INDEX = {
+  	"above-stage": "9",
+  	"below-stage": "0"
+  };
+  var AFRAME_SCENE_PORT_METHODS = [
+  	"setPosition",
+  	"setRotation",
+  	"setAttribute",
+  	"setData",
+  	"countSelector"
+  ];
   var blockDefinitions = block_definitions_default.blocks;
   var CAMERA_SOURCE_RUNTIME_ID = "ext_kubohiroyacamerasource";
+  var AFRAME_CAPABILITY_KEY = "turbowarpAFrameCapability";
   var EXTENSION_OWNER = "turbowarp-ar";
   var TurboWarpARExtension = class {
   	constructor() {
@@ -437,7 +461,7 @@
   		host.style.inset = "0";
   		host.style.overflow = "hidden";
   		host.style.pointerEvents = "none";
-  		host.style.zIndex = layer === "below-stage" ? "0" : "9";
+  		host.style.zIndex = AR_BACKGROUND_Z_INDEX[layer];
   		const video = document.createElement("video");
   		video.muted = true;
   		video.playsInline = true;
@@ -487,14 +511,50 @@
   		for (const target of this.targets.values()) this.syncTargetAttachments(target);
   	}
   	syncTargetAttachments(target) {
+  		const scene = this.aframeScenePort();
+  		for (const selector of target.attachedSelectors) {
+  			if (scene !== null && this.writeTargetThroughAFrame(scene, selector, target)) continue;
+  			this.writeTargetThroughDom(selector, target);
+  		}
+  	}
+  	/**
+  	* Writes a target's pose through the A-Frame capability when A-Frame owns the matching nodes.
+  	*
+  	* Going through the port keeps the scene state A-Frame maintains in step with the attributes on
+  	* the page; writing those same nodes with the DOM directly would leave the two disagreeing. A
+  	* selector A-Frame does not own, or a capability that is absent or disposed, returns false so the
+  	* caller falls back to the plain DOM.
+  	*/
+  	writeTargetThroughAFrame(scene, selector, target) {
+  		try {
+  			if (scene.countSelector(selector) <= 0) return false;
+  			scene.setAttribute(selector, "visible", String(target.visible));
+  			scene.setPosition(selector, target.position.x, target.position.y, target.position.z);
+  			scene.setRotation(selector, target.rotation.x, target.rotation.y, target.rotation.z);
+  			scene.setData(selector, "ar-target", target.id);
+  			scene.setData(selector, "ar-confidence", String(target.confidence));
+  			return true;
+  		} catch {
+  			return false;
+  		}
+  	}
+  	/** Pose write-back for pages without A-Frame, and for nodes A-Frame does not own. */
+  	writeTargetThroughDom(selector, target) {
   		if (typeof document === "undefined") return;
-  		for (const selector of target.attachedSelectors) for (const element of this.elementsForSelector(selector)) {
+  		for (const element of this.elementsForSelector(selector)) {
   			element.setAttribute("visible", String(target.visible));
   			element.setAttribute("position", this.formatVec3(target.position));
   			element.setAttribute("rotation", this.formatVec3(target.rotation));
   			element.setAttribute("data-ar-target", target.id);
   			element.setAttribute("data-ar-confidence", String(target.confidence));
   		}
+  	}
+  	aframeScenePort() {
+  		const candidate = Scratch.vm?.runtime?.[AFRAME_CAPABILITY_KEY];
+  		if (typeof candidate !== "object" || candidate === null) return null;
+  		const port = candidate;
+  		for (const method of AFRAME_SCENE_PORT_METHODS) if (typeof port[method] !== "function") return null;
+  		return candidate;
   	}
   	elementsForSelector(selector) {
   		try {
@@ -517,8 +577,14 @@
   		const axis = value.trim().toLowerCase();
   		return axis === "y" || axis === "z" ? axis : "x";
   	}
+  	/**
+  	* Blocks take whatever string a project hands them, so an unknown layer falls back to the default
+  	* rather than stopping the script. Planned calls do not rely on this: `validateARSceneControl`
+  	* rejects a layer outside the vocabulary before a plan is ever generated.
+  	*/
   	normalizeLayer(value) {
-  		return value.trim() === "below-stage" ? "below-stage" : "above-stage";
+  		const layer = value.trim();
+  		return AR_SCENE_LAYERS.includes(layer) ? layer : DEFAULT_AR_LAYER;
   	}
   	normalizeId(value, fallback = "target") {
   		return value.trim().replace(/[^a-zA-Z0-9_-]/g, "-") || fallback;

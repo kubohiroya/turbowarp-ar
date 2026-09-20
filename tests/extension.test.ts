@@ -235,7 +235,7 @@ describe('TurboWarpARExtension', () => {
     expect(extension.whenARTargetLost({TARGET_ID: 'marker-1'})).toBe(false);
   });
 
-  it('syncs attached selectors to DOM or A-Frame attributes', () => {
+  it('falls back to plain DOM attributes when no A-Frame capability is present', () => {
     const attributes = new Map<string, string>();
     const element = {
       setAttribute: vi.fn((name: string, value: string) => attributes.set(name, value))
@@ -255,5 +255,93 @@ describe('TurboWarpARExtension', () => {
     expect(attributes.get('rotation')).toBe('10 20 30');
     expect(attributes.get('data-ar-target')).toBe('marker-1');
     expect(attributes.get('data-ar-confidence')).toBe('0.5');
+  });
+
+  it('writes attached pose through the A-Frame capability for nodes A-Frame owns', () => {
+    const port = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn((selector: string) => (selector === '#card' ? 1 : 0))
+    };
+    stubScratch({turbowarpAFrameCapability: port});
+    const element = {setAttribute: vi.fn()} as unknown as Element;
+    vi.stubGlobal('document', {querySelectorAll: vi.fn(() => [element])});
+    const extension = new TurboWarpARExtension();
+
+    extension.attachSelectorToARTarget({SELECTOR: '#card', TARGET_ID: 'marker-1'});
+    extension.setARTargetPosition({TARGET_ID: 'marker-1', X: 1, Y: 2, Z: 3});
+    extension.setARTargetRotation({TARGET_ID: 'marker-1', X: 10, Y: 20, Z: 30});
+    extension.setARTargetVisible({TARGET_ID: 'marker-1', VISIBLE: true, CONFIDENCE: 0.5});
+
+    expect(port.setPosition).toHaveBeenLastCalledWith('#card', 1, 2, 3);
+    expect(port.setRotation).toHaveBeenLastCalledWith('#card', 10, 20, 30);
+    expect(port.setAttribute).toHaveBeenLastCalledWith('#card', 'visible', 'true');
+    expect(port.setData).toHaveBeenCalledWith('#card', 'ar-target', 'marker-1');
+    expect(port.setData).toHaveBeenCalledWith('#card', 'ar-confidence', '0.5');
+    expect(element.setAttribute).not.toHaveBeenCalled();
+  });
+
+  it('uses the DOM for selectors A-Frame does not own, and for a disposed capability', () => {
+    const unowned = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn(() => 0)
+    };
+    const disposed = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn(() => {
+        throw new Error('A-Frame runtime capability is disposed.');
+      })
+    };
+
+    for (const port of [unowned, disposed]) {
+      stubScratch({turbowarpAFrameCapability: port});
+      const attributes = new Map<string, string>();
+      vi.stubGlobal('document', {
+        querySelectorAll: vi.fn(() => [
+          {setAttribute: (name: string, value: string) => attributes.set(name, value)}
+        ])
+      });
+      const extension = new TurboWarpARExtension();
+
+      extension.attachSelectorToARTarget({SELECTOR: '#plain', TARGET_ID: 'marker-1'});
+      extension.setARTargetPosition({TARGET_ID: 'marker-1', X: 1, Y: 2, Z: 3});
+
+      expect(attributes.get('position')).toBe('1 2 3');
+      expect(port.setPosition).not.toHaveBeenCalled();
+    }
+  });
+
+  it('keeps a block layer inside the vocabulary the background understands', async () => {
+    stubScratch({
+      ext_kubohiroyacamerasource: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => ({
+            kind: 'video',
+            element: {srcObject: null} as HTMLVideoElement,
+            width: 640,
+            height: 480,
+            previewFlip: 'none',
+            deviceId: 'device-1'
+          }),
+          release: vi.fn(async () => {})
+        }))
+      }
+    });
+
+    const unknownLayer = new TurboWarpARExtension();
+    await unknownLayer.createARScene({CAMERA_ID: 'pose', LAYER: 'camera-under-3d'});
+    expect(unknownLayer.snapshot()).toMatchObject({session: {layer: 'above-stage'}});
+
+    const belowStage = new TurboWarpARExtension();
+    await belowStage.createARScene({CAMERA_ID: 'pose', LAYER: 'below-stage'});
+    expect(belowStage.snapshot()).toMatchObject({session: {layer: 'below-stage'}});
   });
 });

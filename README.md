@@ -2,17 +2,19 @@
 
 **English** | [日本語](README.ja.md)
 
-TurboWarp-AR provides camera-source based AR session and target-state blocks for TurboWarp projects. It uses `turbowarp-camera-source` for camera acquisition and keeps A-Frame integration optional.
+TurboWarp-AR puts a shared camera image behind the TurboWarp stage and keeps named target poses that scene nodes can follow. It uses `turbowarp-camera-source` for camera acquisition and writes to A-Frame nodes through `turbowarp-aframe`'s runtime capability when that extension is present.
+
+**It does not track anything yet.** Target pose and visibility come from blocks a project sets by hand, not from marker detection or WebXR. The blocks exist so the API boundary is fixed before a real provider is written; until one is, treat this extension as a camera backdrop plus a named pose store.
 
 ## What it does
 
-- Starts and stops an AR session by leasing a named shared camera.
-- Tracks named AR target state through a deterministic manual MVP backend.
-- Emits found and lost hat events when a target visibility state changes.
+- Starts and stops a session by leasing a named shared camera, and mounts its frames as a background layer.
+- Holds named target state — visibility, confidence, position, rotation — set by blocks, with no detection behind it.
+- Emits found and lost hat events when a target's visibility changes.
 - Reports target visibility, confidence, position, and rotation.
-- Synchronizes matching DOM or A-Frame nodes to target pose when selectors are attached.
+- Writes attached selectors to that target pose, through the A-Frame capability when A-Frame owns the nodes.
 
-The first implementation intentionally defines the extension boundary before adding a real marker or WebXR provider. Future providers can update the same target state used by these blocks.
+A future marker or WebXR provider can update the same target state these blocks set, which is why the state and its blocks exist before any provider does.
 
 ## Requirements and safety
 
@@ -28,13 +30,13 @@ TurboWarp-AR does not upload camera frames or store images. Camera access is del
 Load `turbowarp-camera-source` first, then load this extension as an unsandboxed custom extension.
 
 ```text
-https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.2.0/dist/ar.js
+https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.3.0/dist/ar.js
 ```
 
 For local development:
 
 ```bash
-pnpm add @kubohiroya/turbowarp-ar@0.2.0
+pnpm add @kubohiroya/turbowarp-ar@0.3.0
 ```
 
 ## Quick start
@@ -49,7 +51,13 @@ set AR target [marker-1] position x [0] y [0] z [-1]
 
 ## A-Frame integration
 
-A-Frame is optional. If an A-Frame node exists in the page, attach it by CSS selector. TurboWarp-AR writes `visible`, `position`, `rotation`, `data-ar-target`, and `data-ar-confidence` attributes to matching elements.
+A-Frame is optional. Attach a node by CSS selector and TurboWarp-AR keeps it on the target pose, writing `visible`, `position`, `rotation`, `data-ar-target`, and `data-ar-confidence`.
+
+When `turbowarp-aframe` is loaded, those writes go through its runtime capability (`setPosition`, `setRotation`, `setAttribute`, `setData`) rather than the DOM, so the scene state that extension maintains stays in step with the attributes on the page. TurboWarp-AR asks the capability whether it owns the selector, and a selector it does not own — or a page with no A-Frame at all — is written with plain DOM attributes instead. TurboWarp-AR never reaches into a node A-Frame owns behind that extension's back.
+
+### Layers
+
+`create AR scene` takes `above-stage` or `below-stage`, the same two values `turbowarp-aframe` uses for its 3D scene host, and an unrecognized value falls back to `above-stage`. On `above-stage` the camera background is given a stacking position one step below the 3D scene host, so a 3D scene always renders over the camera image. That ordering is fixed by the two extensions; there is no layer value that asks for it.
 
 ## Plan API
 
@@ -63,6 +71,8 @@ const calls = createTurboWarpARScenePlan({
   targets: [{targetId: 'marker-1', selector: '#card'}]
 });
 ```
+
+`layer` accepts only `above-stage` (the default) and `below-stage`, the same vocabulary the block and the runtime use; `validateARSceneControl` rejects anything else, so a generator cannot emit a layer the extension would silently discard.
 
 ## Block reference
 
