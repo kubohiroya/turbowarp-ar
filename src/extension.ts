@@ -1,5 +1,6 @@
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
+import {AR_SCENE_LAYERS, DEFAULT_AR_LAYER, type ARSceneLayer} from './plan';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'BOOLEAN' | 'HAT';
 type ArgumentTypeName = 'STRING' | 'NUMBER' | 'BOOLEAN';
@@ -80,13 +81,44 @@ interface ARTargetEvent {
 
 interface ARSession {
   cameraId: string;
-  layer: string;
+  layer: ARSceneLayer;
   lease: CameraLease;
   background: HTMLElement | null;
 }
 
+/**
+ * Stacking positions for the two hosts that can share the stage.
+ *
+ * The camera background sits one step below `turbowarp-aframe`'s 3D scene host, which uses 10, so
+ * a 3D scene on the same layer always renders over the camera image. Keep the two in step when
+ * either extension changes its host stacking.
+ */
+const AR_BACKGROUND_Z_INDEX = {'above-stage': '9', 'below-stage': '0'} as const;
+
+/**
+ * The part of `turbowarp-aframe`'s runtime capability this extension uses to write attached target
+ * pose. Methods are feature-detected rather than version-gated, which is how that capability is
+ * documented to grow.
+ */
+interface AFrameScenePort {
+  setPosition(selector: string, x: number, y: number, z: number): void;
+  setRotation(selector: string, x: number, y: number, z: number): void;
+  setAttribute(selector: string, name: string, value: string): void;
+  setData(selector: string, key: string, value: string): void;
+  countSelector(selector: string): number;
+}
+
+const AFRAME_SCENE_PORT_METHODS = [
+  'setPosition',
+  'setRotation',
+  'setAttribute',
+  'setData',
+  'countSelector'
+] as const;
+
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const CAMERA_SOURCE_RUNTIME_ID = 'ext_kubohiroyacamerasource';
+const AFRAME_CAPABILITY_KEY = 'turbowarpAFrameCapability';
 const EXTENSION_OWNER = 'turbowarp-ar';
 
 export class TurboWarpARExtension implements TurboWarpExtension {
@@ -306,7 +338,7 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   private createBackground(
     source: CameraFrameSource,
     cameraId: string,
-    layer: string
+    layer: ARSceneLayer
   ): HTMLElement | null {
     if (typeof document === 'undefined') return null;
     const existing = document.getElementById('tw-ar-root');
@@ -320,7 +352,7 @@ export class TurboWarpARExtension implements TurboWarpExtension {
     host.style.inset = '0';
     host.style.overflow = 'hidden';
     host.style.pointerEvents = 'none';
-    host.style.zIndex = layer === 'below-stage' ? '0' : '9';
+    host.style.zIndex = AR_BACKGROUND_Z_INDEX[layer];
 
     const video = document.createElement('video');
     video.muted = true;
@@ -371,16 +403,59 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   }
 
   private syncTargetAttachments(target: ARTargetState): void {
-    if (typeof document === 'undefined') return;
+    const scene = this.aframeScenePort();
     for (const selector of target.attachedSelectors) {
-      for (const element of this.elementsForSelector(selector)) {
-        element.setAttribute('visible', String(target.visible));
-        element.setAttribute('position', this.formatVec3(target.position));
-        element.setAttribute('rotation', this.formatVec3(target.rotation));
-        element.setAttribute('data-ar-target', target.id);
-        element.setAttribute('data-ar-confidence', String(target.confidence));
-      }
+      if (scene !== null && this.writeTargetThroughAFrame(scene, selector, target)) continue;
+      this.writeTargetThroughDom(selector, target);
     }
+  }
+
+  /**
+   * Writes a target's pose through the A-Frame capability when A-Frame owns the matching nodes.
+   *
+   * Going through the port keeps the scene state A-Frame maintains in step with the attributes on
+   * the page; writing those same nodes with the DOM directly would leave the two disagreeing. A
+   * selector A-Frame does not own, or a capability that is absent or disposed, returns false so the
+   * caller falls back to the plain DOM.
+   */
+  private writeTargetThroughAFrame(
+    scene: AFrameScenePort,
+    selector: string,
+    target: ARTargetState
+  ): boolean {
+    try {
+      if (scene.countSelector(selector) <= 0) return false;
+      scene.setAttribute(selector, 'visible', String(target.visible));
+      scene.setPosition(selector, target.position.x, target.position.y, target.position.z);
+      scene.setRotation(selector, target.rotation.x, target.rotation.y, target.rotation.z);
+      scene.setData(selector, 'ar-target', target.id);
+      scene.setData(selector, 'ar-confidence', String(target.confidence));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Pose write-back for pages without A-Frame, and for nodes A-Frame does not own. */
+  private writeTargetThroughDom(selector: string, target: ARTargetState): void {
+    if (typeof document === 'undefined') return;
+    for (const element of this.elementsForSelector(selector)) {
+      element.setAttribute('visible', String(target.visible));
+      element.setAttribute('position', this.formatVec3(target.position));
+      element.setAttribute('rotation', this.formatVec3(target.rotation));
+      element.setAttribute('data-ar-target', target.id);
+      element.setAttribute('data-ar-confidence', String(target.confidence));
+    }
+  }
+
+  private aframeScenePort(): AFrameScenePort | null {
+    const candidate = Scratch.vm?.runtime?.[AFRAME_CAPABILITY_KEY];
+    if (typeof candidate !== 'object' || candidate === null) return null;
+    const port = candidate as Record<string, unknown>;
+    for (const method of AFRAME_SCENE_PORT_METHODS) {
+      if (typeof port[method] !== 'function') return null;
+    }
+    return candidate as AFrameScenePort;
   }
 
   private elementsForSelector(selector: string): Element[] {
@@ -408,8 +483,14 @@ export class TurboWarpARExtension implements TurboWarpExtension {
     return axis === 'y' || axis === 'z' ? axis : 'x';
   }
 
-  private normalizeLayer(value: string): string {
-    return value.trim() === 'below-stage' ? 'below-stage' : 'above-stage';
+  /**
+   * Blocks take whatever string a project hands them, so an unknown layer falls back to the default
+   * rather than stopping the script. Planned calls do not rely on this: `validateARSceneControl`
+   * rejects a layer outside the vocabulary before a plan is ever generated.
+   */
+  private normalizeLayer(value: string): ARSceneLayer {
+    const layer = value.trim() as ARSceneLayer;
+    return AR_SCENE_LAYERS.includes(layer) ? layer : DEFAULT_AR_LAYER;
   }
 
   private normalizeId(value: string, fallback = 'target'): string {
