@@ -1,6 +1,11 @@
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
 import {AR_SCENE_LAYERS, DEFAULT_AR_LAYER, type ARSceneLayer} from './plan';
+import {
+  createRuntimeCapability,
+  runtimeCapabilityKey,
+  type ARRuntimeCapabilityV1
+} from './runtime-capability';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'BOOLEAN' | 'HAT';
 type ArgumentTypeName = 'STRING' | 'NUMBER' | 'BOOLEAN';
@@ -127,6 +132,23 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   private status: ARStatus = 'idle';
   private session: ARSession | null = null;
   private sceneGeneration = 0;
+  private readonly runtimeCapability: ARRuntimeCapabilityV1;
+
+  public constructor() {
+    this.runtimeCapability = createRuntimeCapability({
+      createARScene: (cameraId, layer) =>
+        this.createARScene({CAMERA_ID: cameraId, LAYER: layer}),
+      stopARScene: () => this.stopARScene(),
+      defineARTarget: (targetId) => this.defineARTarget({TARGET_ID: targetId}),
+      attachSelectorToARTarget: (selector, targetId) =>
+        this.attachSelectorToARTarget({SELECTOR: selector, TARGET_ID: targetId}),
+      detachSelectorFromARTarget: (selector) =>
+        this.detachSelectorFromARTarget({SELECTOR: selector}),
+      arStatus: () => this.arStatus()
+    });
+    const runtime = Scratch.vm?.runtime;
+    if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+  }
 
   public getInfo(): Record<string, unknown> {
     return {

@@ -242,6 +242,35 @@
   var AR_SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
   /** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
   var DEFAULT_AR_LAYER = "above-stage";
+  var runtimeCapabilityKey = "turbowarpARCapability";
+  function createRuntimeCapability(scene) {
+  	const capability = Object.freeze({
+  		version: 1,
+  		requireVersion(version) {
+  			if (version !== 1) throw new Error(`Unsupported TurboWarp AR runtime capability version: ${version}; supported version is 1.`);
+  			return capability;
+  		},
+  		async createARScene(cameraId, layer) {
+  			await scene.createARScene(cameraId, layer);
+  		},
+  		async stopARScene() {
+  			await scene.stopARScene();
+  		},
+  		defineARTarget(targetId) {
+  			scene.defineARTarget(targetId);
+  		},
+  		attachSelectorToARTarget(selector, targetId) {
+  			scene.attachSelectorToARTarget(selector, targetId);
+  		},
+  		detachSelectorFromARTarget(selector) {
+  			scene.detachSelectorFromARTarget(selector);
+  		},
+  		arStatus() {
+  			return scene.arStatus();
+  		}
+  	});
+  	return capability;
+  }
   //#endregion
   //#region src/extension.ts
   /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
@@ -282,6 +311,22 @@
   		this.status = "idle";
   		this.session = null;
   		this.sceneGeneration = 0;
+  		this.runtimeCapability = createRuntimeCapability({
+  			createARScene: (cameraId, layer) => this.createARScene({
+  				CAMERA_ID: cameraId,
+  				LAYER: layer
+  			}),
+  			stopARScene: () => this.stopARScene(),
+  			defineARTarget: (targetId) => this.defineARTarget({ TARGET_ID: targetId }),
+  			attachSelectorToARTarget: (selector, targetId) => this.attachSelectorToARTarget({
+  				SELECTOR: selector,
+  				TARGET_ID: targetId
+  			}),
+  			detachSelectorFromARTarget: (selector) => this.detachSelectorFromARTarget({ SELECTOR: selector }),
+  			arStatus: () => this.arStatus()
+  		});
+  		const runtime = Scratch.vm?.runtime;
+  		if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
   	}
   	getInfo() {
   		return {

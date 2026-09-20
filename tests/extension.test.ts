@@ -1,5 +1,10 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TurboWarpARExtension} from '../src/extension.js';
+import {
+  runtimeCapabilityKey,
+  runtimeCapabilityVersion,
+  type ARRuntimeCapabilityV1
+} from '../src/runtime-capability.js';
 
 function stubScratch(runtime: Record<string, unknown> = {}) {
   vi.stubGlobal('Scratch', {
@@ -316,6 +321,62 @@ describe('TurboWarpARExtension', () => {
 
       expect(attributes.get('position')).toBe('1 2 3');
       expect(port.setPosition).not.toHaveBeenCalled();
+    }
+  });
+
+  it('publishes a versioned AR scene capability that shares block behavior', async () => {
+    const release = vi.fn(async () => {});
+    stubScratch({
+      ext_kubohiroyacamerasource: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => ({
+            kind: 'video',
+            element: {srcObject: null} as HTMLVideoElement,
+            width: 640,
+            height: 480,
+            previewFlip: 'none',
+            deviceId: 'device-1'
+          }),
+          release
+        }))
+      }
+    });
+    const extension = new TurboWarpARExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as ARRuntimeCapabilityV1;
+
+    expect(capability.version).toBe(runtimeCapabilityVersion);
+    expect(capability.requireVersion(1)).toBe(capability);
+    expect(Object.isFrozen(capability)).toBe(true);
+
+    await capability.createARScene('front', 'below-stage');
+    capability.defineARTarget('marker-1');
+    capability.attachSelectorToARTarget('#card', 'marker-1');
+
+    expect(capability.arStatus()).toBe('running');
+    expect(extension.snapshot()).toMatchObject({
+      session: {cameraId: 'front', layer: 'below-stage'},
+      targets: [{id: 'marker-1', attachedSelectors: ['#card']}]
+    });
+
+    capability.detachSelectorFromARTarget('#card');
+    expect(extension.snapshot()).toMatchObject({targets: [{attachedSelectors: []}]});
+
+    await capability.stopARScene();
+    expect(release).toHaveBeenCalledOnce();
+    expect(capability.arStatus()).toBe('idle');
+  });
+
+  it('refuses every capability version but 1', () => {
+    const extension = new TurboWarpARExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as ARRuntimeCapabilityV1;
+
+    expect(extension.arStatus()).toBe('idle');
+    for (const version of [0, 2]) {
+      expect(() => capability.requireVersion(version)).toThrow(
+        `Unsupported TurboWarp AR runtime capability version: ${version}; supported version is 1.`
+      );
     }
   });
 

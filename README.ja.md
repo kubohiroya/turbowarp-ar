@@ -30,13 +30,13 @@ TurboWarp-AR はカメラフレームをアップロードせず、画像も保�
 `turbowarp-camera-source` を先に読み込み、その後この拡張を unsandboxed custom extension として読み込みます。
 
 ```text
-https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.3.0/dist/ar.js
+https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.4.0/dist/ar.js
 ```
 
 ローカル開発では次を使います。
 
 ```bash
-pnpm add @kubohiroya/turbowarp-ar@0.3.0
+pnpm add @kubohiroya/turbowarp-ar@0.4.0
 ```
 
 ## Quick start
@@ -58,6 +58,25 @@ A-Frame は任意です。CSS selector で node を attach すると、TurboWarp
 ### レイヤ
 
 `create AR scene` が受け取るのは `above-stage` と `below-stage` の2つだけで、これは `turbowarp-aframe` が 3D scene host に使うのと同じ語彙です。認識できない値は `above-stage` に丸めます。`above-stage` のとき、カメラ背景は 3D scene host の1つ下の重なり位置に置かれるため、3D scene は常にカメラ映像の上に描かれます。この順序は2つの拡張が固定しているもので、それを要求する layer 値は存在しません。
+
+## ランタイム capability
+
+ブロックからではなく記述から AR scene を組み立てる機能拡張は、`Scratch.vm.runtime.turbowarpARCapability` を取得し、`requireVersion(1)` を呼んで、返ったオブジェクトを使えます。ブロックと同じハンドラへ委譲する、freeze された狭い port です。
+
+```ts
+interface ARRuntimeCapabilityV1 {
+  readonly version: 1;
+  requireVersion(version: number): ARRuntimeCapabilityV1;
+  createARScene(cameraId: string, layer: 'above-stage' | 'below-stage'): Promise<void>;
+  stopARScene(): Promise<void>;
+  defineARTarget(targetId: string): void;
+  attachSelectorToARTarget(selector: string, targetId: string): void;
+  detachSelectorFromARTarget(selector: string): void;
+  arStatus(): string;
+}
+```
+
+意図的に scene の構築とライフサイクルで止めています。target の pose は現在ブロックが、将来はトラッキング provider が設定するもので、その provider の境界を設計するまではどちらもこの port の背後に置きません。method は version を変えずに version 1 へ追加されるため、consumer は使う method の有無を確かめます。それ以外の version を要求すると例外になります。
 
 ## Plan API
 
