@@ -30,13 +30,13 @@ TurboWarp-AR does not upload camera frames or store images. Camera access is del
 Load `turbowarp-camera-source` first, then load this extension as an unsandboxed custom extension.
 
 ```text
-https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.3.0/dist/ar.js
+https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.4.0/dist/ar.js
 ```
 
 For local development:
 
 ```bash
-pnpm add @kubohiroya/turbowarp-ar@0.3.0
+pnpm add @kubohiroya/turbowarp-ar@0.4.0
 ```
 
 ## Quick start
@@ -58,6 +58,30 @@ When `turbowarp-aframe` is loaded, those writes go through its runtime capabilit
 ### Layers
 
 `create AR scene` takes `above-stage` or `below-stage`, the same two values `turbowarp-aframe` uses for its 3D scene host, and an unrecognized value falls back to `above-stage`. On `above-stage` the camera background is given a stacking position one step below the 3D scene host, so a 3D scene always renders over the camera image. That ordering is fixed by the two extensions; there is no layer value that asks for it.
+
+## Runtime capability
+
+An extension that builds an AR scene from a description, rather than from blocks, can read
+`Scratch.vm.runtime.turbowarpARCapability`, call `requireVersion(1)`, and use the object it returns.
+It is a frozen, narrow port that delegates to the same handlers the blocks use.
+
+```ts
+interface ARRuntimeCapabilityV1 {
+  readonly version: 1;
+  requireVersion(version: number): ARRuntimeCapabilityV1;
+  createARScene(cameraId: string, layer: 'above-stage' | 'below-stage'): Promise<void>;
+  stopARScene(): Promise<void>;
+  defineARTarget(targetId: string): void;
+  attachSelectorToARTarget(selector: string, targetId: string): void;
+  detachSelectorFromARTarget(selector: string): void;
+  arStatus(): string;
+}
+```
+
+It stops at scene construction and lifecycle on purpose. Target pose is set by the blocks today and
+by a tracking provider later, and neither belongs behind this port until that provider's boundary is
+designed. Methods may be added to version 1 without changing its version, so a consumer checks for
+the methods it uses; any other requested version throws.
 
 ## Plan API
 

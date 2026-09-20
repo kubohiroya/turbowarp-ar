@@ -12,6 +12,8 @@
 
 3D scene は持ちません。それは `turbowarp-aframe` の責務であり、attachment の書き込みは、A-Frame が一致する node を所有している限りその拡張の runtime capability を通ります。そうすることで、A-Frame 側の scene state とページ上の属性が乖離しません。capability の method は version で門番するのではなく存在検査で使います。これはその capability が成長すると文書化されている方式に合わせたものです。A-Frame が所有しない selector、dispose 済みの capability、A-Frame の無いページは、いずれも素の DOM 属性へフォールバックします。
 
+ブロックと `turbowarpARCapability` は同じハンドラを経由するため、記述から AR scene を組み立てる機能拡張はブロックと同じ挙動を得ます。この port が覆うのは scene の構築とライフサイクルだけで、pose はトラッキング provider ができるまでブロックの側に残します。
+
 scene の計画も持ちません。`@kubohiroya/turbowarp-ar/plan` は build 時の module であり `dist/ar.js` には含まれません。TurboWarp 作品を生成する側のために、AR scene control データを検証し、AR scene を立ち上げる低レベル call を返します。
 
 ### layer 語彙

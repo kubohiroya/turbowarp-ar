@@ -21,6 +21,10 @@ attributes on the page cannot drift apart. The capability's methods are feature-
 than version-gated, matching how that capability is documented to grow. A selector A-Frame does not
 own, a disposed capability, and a page with no A-Frame all fall back to plain DOM attributes.
 
+Both the blocks and `turbowarpARCapability` reach these through the same handlers, so an extension
+that builds an AR scene from a description gets the behavior the blocks have. That port covers scene
+construction and lifecycle only; pose stays with the blocks until a tracking provider exists.
+
 It does not own scene planning either. `@kubohiroya/turbowarp-ar/plan` is a build-time module, not
 part of `dist/ar.js`; it validates AR scene control data and emits the low-level calls that set an
 AR scene up, for generators that build TurboWarp projects.
