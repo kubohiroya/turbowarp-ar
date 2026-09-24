@@ -33,7 +33,6 @@
   "files": [
     "dist/",
     "docs/",
-    "schemas/",
     "src/",
     "templates/",
     "README.md",
@@ -64,6 +63,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@kubohiroya/turbowarp-extension-manifest": "0.2.0",
     "@kubohiroya/vite-plugin-turbowarp-extension": "0.4.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
