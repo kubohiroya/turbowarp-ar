@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubohiroya.github.io/turbowarp-ar/schemas/block-editor-fixed-inputs.schema.json",
+  "$defs": {
+    "createARScene": {
+      "type": "object",
+      "properties": {
+        "LAYER": {
+          "type": "string",
+          "enum": [
+            "above-stage",
+            "below-stage"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "setARTargetVisible": {
+      "type": "object",
+      "properties": {
+        "CONFIDENCE": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setARTargetPosition": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number"
+        },
+        "Y": {
+          "type": "number"
+        },
+        "Z": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setARTargetRotation": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number"
+        },
+        "Y": {
+          "type": "number"
+        },
+        "Z": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "arTargetPosition": {
+      "type": "object",
+      "properties": {
+        "AXIS": {
+          "type": "string",
+          "enum": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "arTargetRotation": {
+      "type": "object",
+      "properties": {
+        "AXIS": {
+          "type": "string",
+          "enum": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

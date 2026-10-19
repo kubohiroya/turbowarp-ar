@@ -37,7 +37,8 @@
     "templates/",
     "README.md",
     "README.ja.md",
-    "LICENSE"
+    "LICENSE",
+    "schemas/"
   ],
   "publishConfig": {
     "access": "public",
@@ -53,7 +54,7 @@
     "build": "vite build && tsc -p tsconfig.lib.json",
     "lint": "eslint src tests vite.config.ts",
     "test": "vitest run",
-    "docs": "node scripts/generate-readme.ts",
+    "docs": "node scripts/generate-readme.ts && node scripts/generate-fixed-input-docs.mjs",
     "docs:check": "pnpm run docs && git diff --exit-code -- README.md",
     "template:readme": "node scripts/apply-readme-template.ts",
     "repo:check": "node scripts/check-repo.ts",
@@ -70,6 +71,10 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "react-dom": "18.3.1"
+  },
+  "dependencies": {
+    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#485f0e550e622235624b5e9176820161aeeba252"
   }
 }

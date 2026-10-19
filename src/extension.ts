@@ -1,3 +1,4 @@
+import {fixedInputEditors, registerFixedInputEditors} from './fixed-input-editors.js';
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
 import {AR_SCENE_LAYERS, DEFAULT_AR_LAYER, type ARSceneLayer} from './plan';
@@ -133,21 +134,32 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   private session: ARSession | null = null;
   private sceneGeneration = 0;
   private readonly runtimeCapability: ARRuntimeCapabilityV1;
+  private removeFixedEditors: () => void = () => {};
 
   public constructor() {
-    this.runtimeCapability = createRuntimeCapability({
-      createARScene: (cameraId, layer) =>
-        this.createARScene({CAMERA_ID: cameraId, LAYER: layer}),
-      stopARScene: () => this.stopARScene(),
-      defineARTarget: (targetId) => this.defineARTarget({TARGET_ID: targetId}),
-      attachSelectorToARTarget: (selector, targetId) =>
-        this.attachSelectorToARTarget({SELECTOR: selector, TARGET_ID: targetId}),
-      detachSelectorFromARTarget: (selector) =>
-        this.detachSelectorFromARTarget({SELECTOR: selector}),
-      arStatus: () => this.arStatus()
-    });
-    const runtime = Scratch.vm?.runtime;
-    if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+    this.removeFixedEditors = registerFixedInputEditors(Scratch, fixedInputEditors);
+    try {
+      this.runtimeCapability = createRuntimeCapability({
+        createARScene: (cameraId, layer) =>
+          this.createARScene({CAMERA_ID: cameraId, LAYER: layer}),
+        stopARScene: () => this.stopARScene(),
+        defineARTarget: (targetId) => this.defineARTarget({TARGET_ID: targetId}),
+        attachSelectorToARTarget: (selector, targetId) =>
+          this.attachSelectorToARTarget({SELECTOR: selector, TARGET_ID: targetId}),
+        detachSelectorFromARTarget: (selector) =>
+          this.detachSelectorFromARTarget({SELECTOR: selector}),
+        arStatus: () => this.arStatus()
+      });
+      const runtime = Scratch.vm?.runtime;
+      if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+    } catch (error) {
+      this.removeFixedEditors();
+      throw error;
+    }
+  }
+
+  public dispose(): void {
+    this.removeFixedEditors();
   }
 
   public getInfo(): Record<string, unknown> {

@@ -19,6 +19,324 @@
   	docsURI: "https://kubohiroya.github.io/turbowarp-ar/",
   	blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNCIgeT0iOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiByeD0iMyIgZmlsbD0iIzRDOTdGRiIvPjxyZWN0IHg9IjI2IiB5PSI4IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjNTlDMDU5Ii8+PHJlY3QgeD0iMTUiIHk9IjI2IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjRkZBQjE5Ii8+PC9zdmc+"
   };
+  //#endregion
+  //#region node_modules/.pnpm/@kubohiroya+turbowarp-extension-data-editor@https+++codeload.github.com+kubohiroya+turb_59cd91fb2a3b5076a9c3c9d67984655c/node_modules/@kubohiroya/turbowarp-extension-data-editor/dist/fixed-input-schema.js
+  var numberToken = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/u;
+  var invalidNumber = Object.freeze({
+  	kind: "invalid",
+  	code: "fixed-number-input-invalid"
+  });
+  /**
+  * Parse a NEW numeric draft according to NP-finite-new-input-v1.
+  * Never apply this to opening/no-op raw values or use it as an owner validator.
+  * Keep the validated token so negative zero, precision and exponent spelling survive.
+  */
+  function parseFixedNumberInput(input) {
+  	if (typeof input === "number") {
+  		if (!Number.isFinite(input)) return invalidNumber;
+  		return Object.freeze({
+  			kind: "valid",
+  			token: Object.is(input, -0) ? "-0" : String(input),
+  			value: input
+  		});
+  	}
+  	if (typeof input !== "string") return invalidNumber;
+  	const token = input.trim();
+  	if (!numberToken.test(token)) return invalidNumber;
+  	const value = Number(token);
+  	return Number.isFinite(value) ? Object.freeze({
+  		kind: "valid",
+  		token,
+  		value
+  	}) : invalidNumber;
+  }
+  var block_editor_fixed_inputs_schema_default = {
+  	$schema: "https://json-schema.org/draft/2020-12/schema",
+  	$id: "https://kubohiroya.github.io/turbowarp-ar/schemas/block-editor-fixed-inputs.schema.json",
+  	$defs: {
+  		"createARScene": {
+  			"type": "object",
+  			"properties": { "LAYER": {
+  				"type": "string",
+  				"enum": ["above-stage", "below-stage"]
+  			} },
+  			"additionalProperties": false
+  		},
+  		"setARTargetVisible": {
+  			"type": "object",
+  			"properties": { "CONFIDENCE": { "type": "number" } },
+  			"additionalProperties": false
+  		},
+  		"setARTargetPosition": {
+  			"type": "object",
+  			"properties": {
+  				"X": { "type": "number" },
+  				"Y": { "type": "number" },
+  				"Z": { "type": "number" }
+  			},
+  			"additionalProperties": false
+  		},
+  		"setARTargetRotation": {
+  			"type": "object",
+  			"properties": {
+  				"X": { "type": "number" },
+  				"Y": { "type": "number" },
+  				"Z": { "type": "number" }
+  			},
+  			"additionalProperties": false
+  		},
+  		"arTargetPosition": {
+  			"type": "object",
+  			"properties": { "AXIS": {
+  				"type": "string",
+  				"enum": [
+  					"x",
+  					"y",
+  					"z"
+  				]
+  			} },
+  			"additionalProperties": false
+  		},
+  		"arTargetRotation": {
+  			"type": "object",
+  			"properties": { "AXIS": {
+  				"type": "string",
+  				"enum": [
+  					"x",
+  					"y",
+  					"z"
+  				]
+  			} },
+  			"additionalProperties": false
+  		}
+  	}
+  };
+  //#endregion
+  //#region src/fixed-input-schema.ts
+  /** Canonical fixed field fragments; URI is identity only, never fetched. */
+  function fixedInputBundle(opcode, argument) {
+  	const source = {
+  		repository: "turbowarp-ar",
+  		path: "schemas/block-editor-fixed-inputs.schema.json",
+  		symbol: `#/$defs/${opcode}/properties/${argument}`
+  	};
+  	const definitions = block_editor_fixed_inputs_schema_default.$defs;
+  	return {
+  		identity: {
+  			ownerId: "turbowarp-ar",
+  			contractId: "fixed-inputs",
+  			revision: "1",
+  			variantId: opcode + "." + argument
+  		},
+  		dialect: "2020-12",
+  		root: {
+  			retrievalUri: block_editor_fixed_inputs_schema_default.$id,
+  			document: definitions[opcode].properties[argument],
+  			artifact: {
+  				role: "canonical-schema",
+  				source
+  			}
+  		},
+  		resources: [],
+  		provenance: {
+  			canonicalSources: [source, ...[{
+  				"repository": "turbowarp-ar",
+  				"path": "src/extension.ts",
+  				"symbol": "normalizeAxis / normalizeLayer / clamp01 / argsToVec3"
+  			}]],
+  			generatedFiles: [{
+  				repository: "turbowarp-ar",
+  				path: "docs/schemas/block-editor-fixed-inputs.schema.json"
+  			}],
+  			generationSources: [{
+  				repository: "turbowarp-ar",
+  				path: "scripts/generate-fixed-input-docs.mjs"
+  			}],
+  			referenceSchemas: []
+  		}
+  	};
+  }
+  //#endregion
+  //#region src/fixed-input-editors.ts
+  var invalid = () => [{ message: "Invalid fixed input." }];
+  function number(value) {
+  	if (typeof value !== "number" && typeof value !== "string" || typeof value === "string" && value.trim() === "") throw new TypeError("Unrepresentable numeric literal.");
+  	const result = Number(value);
+  	if (!Number.isFinite(result)) throw new TypeError("Nonfinite numeric literal.");
+  	return result;
+  }
+  function numericBinding(opcode, argument) {
+  	return {
+  		argument,
+  		schemaBundle: fixedInputBundle(opcode, argument),
+  		control: {
+  			label: argument,
+  			kind: "number"
+  		},
+  		read: number,
+  		encode(value) {
+  			const parsed = parseFixedNumberInput(value);
+  			if (parsed.kind !== "valid") throw new TypeError("Invalid numeric token.");
+  			return parsed.token;
+  		},
+  		validateCandidate(candidate, _context, finalSnapshot) {
+  			try {
+  				number(candidate);
+  				return ownerCheck(opcode, argument, candidate, finalSnapshot) ? [] : invalid();
+  			} catch {
+  				return invalid();
+  			}
+  		}
+  	};
+  }
+  function enumBinding(opcode, argument, choices, normalization) {
+  	const project = (value) => {
+  		if (typeof value !== "string") return value;
+  		const normalized = normalization === "none" ? value : normalization === "trim" ? value.trim() : value.trim().toLowerCase();
+  		return choices.includes(normalized) ? normalized : value;
+  	};
+  	return {
+  		argument,
+  		schemaBundle: fixedInputBundle(opcode, argument),
+  		control: {
+  			label: argument,
+  			kind: "enum",
+  			choices: choices.map((value) => ({ value }))
+  		},
+  		read: project,
+  		encode(value) {
+  			if (typeof value !== "string" || !choices.includes(value)) throw new TypeError("Choose a known value.");
+  			return value;
+  		},
+  		validateCandidate(candidate, _context, finalSnapshot) {
+  			try {
+  				return typeof candidate === "string" && choices.includes(candidate) && ownerCheck(opcode, argument, candidate, finalSnapshot) ? [] : invalid();
+  			} catch {
+  				return invalid();
+  			}
+  		}
+  	};
+  }
+  function ownerCheck(_opcode, _argument, _candidate, _snapshot) {
+  	return true;
+  }
+  var extensionId = "kubohiroyaar";
+  var validationContext = () => ({
+  	consumerId: "turbowarp-ar",
+  	nowMs: 0,
+  	settings: null
+  });
+  var fixedInputEditors = [
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "createARScene-fixed",
+  		opcodes: [`${extensionId}_createARScene`],
+  		contractId: "turbowarp-ar/createARScene",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("createARScene", "LAYER", ["above-stage", "below-stage"], "trim")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetVisible-fixed",
+  		opcodes: [`${extensionId}_setARTargetVisible`],
+  		contractId: "turbowarp-ar/setARTargetVisible",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: ["VISIBLE"],
+  		bindings: [numericBinding("setARTargetVisible", "CONFIDENCE")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetPosition-fixed",
+  		opcodes: [`${extensionId}_setARTargetPosition`],
+  		contractId: "turbowarp-ar/setARTargetPosition",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [
+  			numericBinding("setARTargetPosition", "X"),
+  			numericBinding("setARTargetPosition", "Y"),
+  			numericBinding("setARTargetPosition", "Z")
+  		]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetRotation-fixed",
+  		opcodes: [`${extensionId}_setARTargetRotation`],
+  		contractId: "turbowarp-ar/setARTargetRotation",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [
+  			numericBinding("setARTargetRotation", "X"),
+  			numericBinding("setARTargetRotation", "Y"),
+  			numericBinding("setARTargetRotation", "Z")
+  		]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "arTargetPosition-fixed",
+  		opcodes: [`${extensionId}_arTargetPosition`],
+  		contractId: "turbowarp-ar/arTargetPosition",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("arTargetPosition", "AXIS", [
+  			"x",
+  			"y",
+  			"z"
+  		], "trim-lower")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "arTargetRotation-fixed",
+  		opcodes: [`${extensionId}_arTargetRotation`],
+  		contractId: "turbowarp-ar/arTargetRotation",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("arTargetRotation", "AXIS", [
+  			"x",
+  			"y",
+  			"z"
+  		], "trim-lower")]
+  	}
+  ];
+  /** Register metadata only; the GUI startup capability owns editor activation. */
+  function registerFixedInputEditors(scratch, definitions, runtimeOverride) {
+  	const host = scratch;
+  	const api = host.gui?.blockEditors;
+  	if (!definitions.length || api?.apiVersion !== 1 || typeof api.registerFixedInputEditor !== "function") return () => {};
+  	const runtime = runtimeOverride ?? host.vm?.runtime;
+  	const removers = [];
+  	let active = true;
+  	const dispose = () => {
+  		if (!active) return;
+  		active = false;
+  		runtime?.off?.("RUNTIME_DISPOSED", dispose);
+  		for (const remove of removers.splice(0).reverse()) remove();
+  	};
+  	try {
+  		for (const definition of definitions) {
+  			const remove = api.registerFixedInputEditor.call(api, definition);
+  			if (typeof remove !== "function") throw new TypeError("Invalid fixed input registration disposer.");
+  			removers.push(remove);
+  		}
+  		runtime?.on?.("RUNTIME_DISPOSED", dispose);
+  	} catch (error) {
+  		dispose();
+  		throw error;
+  	}
+  	return dispose;
+  }
   var block_definitions_default = {
   	extensionName: "TurboWarp-AR",
   	blocks: [
@@ -311,22 +629,32 @@
   		this.status = "idle";
   		this.session = null;
   		this.sceneGeneration = 0;
-  		this.runtimeCapability = createRuntimeCapability({
-  			createARScene: (cameraId, layer) => this.createARScene({
-  				CAMERA_ID: cameraId,
-  				LAYER: layer
-  			}),
-  			stopARScene: () => this.stopARScene(),
-  			defineARTarget: (targetId) => this.defineARTarget({ TARGET_ID: targetId }),
-  			attachSelectorToARTarget: (selector, targetId) => this.attachSelectorToARTarget({
-  				SELECTOR: selector,
-  				TARGET_ID: targetId
-  			}),
-  			detachSelectorFromARTarget: (selector) => this.detachSelectorFromARTarget({ SELECTOR: selector }),
-  			arStatus: () => this.arStatus()
-  		});
-  		const runtime = Scratch.vm?.runtime;
-  		if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+  		this.removeFixedEditors = () => {};
+  		this.removeFixedEditors = registerFixedInputEditors(Scratch, fixedInputEditors);
+  		try {
+  			this.runtimeCapability = createRuntimeCapability({
+  				createARScene: (cameraId, layer) => this.createARScene({
+  					CAMERA_ID: cameraId,
+  					LAYER: layer
+  				}),
+  				stopARScene: () => this.stopARScene(),
+  				defineARTarget: (targetId) => this.defineARTarget({ TARGET_ID: targetId }),
+  				attachSelectorToARTarget: (selector, targetId) => this.attachSelectorToARTarget({
+  					SELECTOR: selector,
+  					TARGET_ID: targetId
+  				}),
+  				detachSelectorFromARTarget: (selector) => this.detachSelectorFromARTarget({ SELECTOR: selector }),
+  				arStatus: () => this.arStatus()
+  			});
+  			const runtime = Scratch.vm?.runtime;
+  			if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+  		} catch (error) {
+  			this.removeFixedEditors();
+  			throw error;
+  		}
+  	}
+  	dispose() {
+  		this.removeFixedEditors();
   	}
   	getInfo() {
   		return {
