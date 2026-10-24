@@ -7,7 +7,6 @@
 (function (Scratch) {
   'use strict';
 
-  //#region src/config.ts
   var extensionConfig = {
   	id: "kubohiroyaar",
   	slug: "ar",
@@ -19,8 +18,6 @@
   	docsURI: "https://kubohiroya.github.io/turbowarp-ar/",
   	blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNCIgeT0iOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiByeD0iMyIgZmlsbD0iIzRDOTdGRiIvPjxyZWN0IHg9IjI2IiB5PSI4IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjNTlDMDU5Ii8+PHJlY3QgeD0iMTUiIHk9IjI2IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjRkZBQjE5Ii8+PC9zdmc+"
   };
-  //#endregion
-  //#region node_modules/.pnpm/@kubohiroya+turbowarp-extension-data-editor@0.2.1_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@kubohiroya/turbowarp-extension-data-editor/dist/fixed-input-schema.js
   var numberToken = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/u;
   var invalidNumber = Object.freeze({
   	kind: "invalid",
@@ -111,8 +108,6 @@
   		}
   	}
   };
-  //#endregion
-  //#region src/fixed-input-schema.ts
   /** Canonical fixed field fragments; URI is identity only, never fetched. */
   function fixedInputBundle(opcode, argument) {
   	const source = {
@@ -156,8 +151,6 @@
   		}
   	};
   }
-  //#endregion
-  //#region src/fixed-input-editors.ts
   var invalid = () => [{ message: "Invalid fixed input." }];
   function number(value) {
   	if (typeof value !== "number" && typeof value !== "string" || typeof value === "string" && value.trim() === "") throw new TypeError("Unrepresentable numeric literal.");
@@ -555,8 +548,6 @@
   		}
   	]
   };
-  //#endregion
-  //#region src/plan.ts
   var AR_SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
   /** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
   var DEFAULT_AR_LAYER = "above-stage";
@@ -589,8 +580,6 @@
   	});
   	return capability;
   }
-  //#endregion
-  //#region src/extension.ts
   /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
   function backgroundTransform(flip) {
   	const horizontal = flip === "horizontal" || flip === "both";
@@ -978,10 +967,7 @@
   		};
   	}
   };
-  //#endregion
-  //#region src/index.ts
   if (extensionConfig.unsandboxed && !Scratch.extensions.unsandboxed) throw new Error(`${extensionConfig.name} must run unsandboxed.`);
   Scratch.extensions.register(new TurboWarpARExtension());
-  //#endregion
 
 })(Scratch);
