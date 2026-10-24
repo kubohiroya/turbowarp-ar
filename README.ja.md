@@ -118,6 +118,8 @@ Extension ID は `kubohiroyaar` です。Extension ID や opcode を変更する
 
 ## 開発
 
+共通data-editorは開発依存です。固定入力の純粋な数値parserはビルド時に取り込み、配布JSと`./plan`はdata-editorのインストールを要求しません。Schema compiler、Ajv、フォーム描画は共通GUIが担当し、ビルド時にこれらの混入を検出します。
+
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
