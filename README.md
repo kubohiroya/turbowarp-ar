@@ -1,5 +1,7 @@
 # TurboWarp-AR
 
+<img src="assets/block-icon.svg" alt="" width="48" height="48">
+
 **English** | [日本語](README.ja.md)
 
 TurboWarp-AR puts a shared camera image behind the TurboWarp stage and keeps named target poses that scene nodes can follow. It uses `turbowarp-camera-source` for camera acquisition and writes to A-Frame nodes through `turbowarp-aframe`'s runtime capability when that extension is present.
