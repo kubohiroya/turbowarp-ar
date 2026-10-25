@@ -11,6 +11,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
+      '@kubohiroya/turbowarp-camera-source':
+        specifier: ^0.19.4
+        version: 0.19.4
       '@kubohiroya/turbowarp-extension-data-editor':
         specifier: ^0.3.3
         version: 0.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -260,6 +263,10 @@ packages:
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
+
+  '@kubohiroya/turbowarp-camera-source@0.19.4':
+    resolution: {integrity: sha512-/3KYLTm7IVRM/l24XSvQUO1wKSNclWRmbaBSHHwu7CJ6PTim+J0nmp4CRK8bkO2kZ2rCKMosNnVW76seIKf8kg==}
+    engines: {node: '>=22.18.0'}
 
   '@kubohiroya/turbowarp-extension-data-editor@0.3.3':
     resolution: {integrity: sha512-2HFt8Pi9xe2FkhM2IbIxO8PYESBVKmpZZJT/omgl94y8MCqApP15RkGwNq5OPM2JyE/wQi624hrzeZu6eJIreA==}
@@ -1344,6 +1351,8 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
+
+  '@kubohiroya/turbowarp-camera-source@0.19.4': {}
 
   '@kubohiroya/turbowarp-extension-data-editor@0.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:

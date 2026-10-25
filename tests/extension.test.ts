@@ -1,10 +1,27 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  cameraSourceRuntimeKey,
+  type CameraFrameSource,
+  type CameraLease
+} from '@kubohiroya/turbowarp-camera-source/runtime';
 import {TurboWarpARExtension} from '../src/extension.js';
 import {
   runtimeCapabilityKey,
   runtimeCapabilityVersion,
   type ARRuntimeCapabilityV1
 } from '../src/runtime-capability.js';
+
+/** A frame source shaped by the contract Camera Source publishes, not by a local copy of it. */
+function frameSource(deviceId: string): CameraFrameSource {
+  return {
+    kind: 'video',
+    element: {srcObject: null} as HTMLVideoElement,
+    width: 640,
+    height: 480,
+    previewFlip: 'none',
+    deviceId
+  };
+}
 
 function stubScratch(runtime: Record<string, unknown> = {}) {
   vi.stubGlobal('Scratch', {
@@ -85,16 +102,9 @@ describe('TurboWarpARExtension', () => {
   it('starts and stops a camera-source backed session', async () => {
     const release = vi.fn(async () => {});
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            previewFlip: 'none',
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release
         }))
       }
@@ -115,7 +125,7 @@ describe('TurboWarpARExtension', () => {
   it('releases the camera lease when frame source setup fails', async () => {
     const release = vi.fn(async () => {});
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
           getFrameSource: () => {
             throw new Error('missing frame');
@@ -134,21 +144,15 @@ describe('TurboWarpARExtension', () => {
   });
 
   it('keeps the latest AR scene when starts resolve out of order', async () => {
-    const first = deferred<{
-      getFrameSource: () => HTMLVideoElement;
-      release: () => Promise<void>;
-    }>();
-    const second = deferred<{
-      getFrameSource: () => HTMLVideoElement;
-      release: () => Promise<void>;
-    }>();
+    const first = deferred<CameraLease>();
+    const second = deferred<CameraLease>();
     const firstRelease = vi.fn(async () => {});
     const secondRelease = vi.fn(async () => {});
     const acquireCamera = vi
       .fn()
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
-    stubScratch({ext_kubohiroyacamerasource: {acquireCamera}});
+    stubScratch({[cameraSourceRuntimeKey]: {acquireCamera}});
     const extension = new TurboWarpARExtension();
 
     const firstStart = extension.createARScene({CAMERA_ID: 'first', LAYER: 'above-stage'});
@@ -157,29 +161,13 @@ describe('TurboWarpARExtension', () => {
     await Promise.resolve();
 
     second.resolve({
-      getFrameSource: () =>
-        ({
-          kind: 'video',
-          element: {srcObject: null} as HTMLVideoElement,
-          width: 640,
-          height: 480,
-          previewFlip: 'none',
-          deviceId: 'device-2'
-        }) as unknown as HTMLVideoElement,
+      getFrameSource: () => frameSource('device-2'),
       release: secondRelease
     });
     await secondStart;
 
     first.resolve({
-      getFrameSource: () =>
-        ({
-          kind: 'video',
-          element: {srcObject: null} as HTMLVideoElement,
-          width: 640,
-          height: 480,
-          previewFlip: 'none',
-          deviceId: 'device-1'
-        }) as unknown as HTMLVideoElement,
+      getFrameSource: () => frameSource('device-1'),
       release: firstRelease
     });
     await firstStart;
@@ -195,16 +183,9 @@ describe('TurboWarpARExtension', () => {
       throw new Error('release failed');
     });
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            previewFlip: 'none',
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release
         }))
       }
@@ -327,16 +308,9 @@ describe('TurboWarpARExtension', () => {
   it('publishes a versioned AR scene capability that shares block behavior', async () => {
     const release = vi.fn(async () => {});
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            previewFlip: 'none',
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release
         }))
       }
@@ -382,16 +356,9 @@ describe('TurboWarpARExtension', () => {
 
   it('keeps a block layer inside the vocabulary the background understands', async () => {
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            previewFlip: 'none',
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release: vi.fn(async () => {})
         }))
       }
