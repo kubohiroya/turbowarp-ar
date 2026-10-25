@@ -551,6 +551,21 @@
   var AR_SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
   /** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
   var DEFAULT_AR_LAYER = "above-stage";
+  /**
+  * Where the extension instance puts itself on the VM runtime.
+  *
+  * Present as soon as the extension is registered. Absent means Camera Source is not loaded, which a
+  * consumer has to handle whatever else it does.
+  */
+  var cameraSourceRuntimeKey = "ext_kubohiroyacamerasource";
+  /** Narrows a runtime value to the Camera Source surface, so a missing extension reads as absent. */
+  function readCameraSourceRuntime(runtime) {
+  	if (typeof runtime !== "object" || runtime === null) return void 0;
+  	const candidate = runtime[cameraSourceRuntimeKey];
+  	if (typeof candidate !== "object" || candidate === null) return void 0;
+  	const { acquireCamera } = candidate;
+  	return typeof acquireCamera === "function" ? candidate : void 0;
+  }
   var runtimeCapabilityKey = "turbowarpARCapability";
   function createRuntimeCapability(scene) {
   	const capability = Object.freeze({
@@ -608,7 +623,6 @@
   	"countSelector"
   ];
   var blockDefinitions = block_definitions_default.blocks;
-  var CAMERA_SOURCE_RUNTIME_ID = "ext_kubohiroyacamerasource";
   var AFRAME_CAPABILITY_KEY = "turbowarpAFrameCapability";
   var EXTENSION_OWNER = "turbowarp-ar";
   var TurboWarpARExtension = class {
@@ -803,9 +817,7 @@
   		};
   	}
   	cameraSource() {
-  		const candidate = Scratch.vm.runtime[CAMERA_SOURCE_RUNTIME_ID];
-  		if (typeof candidate === "object" && candidate !== null && "acquireCamera" in candidate && typeof candidate.acquireCamera === "function") return candidate;
-  		return null;
+  		return readCameraSourceRuntime(Scratch.vm.runtime) ?? null;
   	}
   	async releaseLease(lease) {
   		try {
