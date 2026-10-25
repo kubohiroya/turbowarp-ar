@@ -65,6 +65,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@kubohiroya/turbowarp-camera-source": "^0.19.4",
     "@kubohiroya/turbowarp-extension-manifest": "^0.3.2",
     "@kubohiroya/vite-plugin-turbowarp-extension": "^0.6.1",
     "@types/node": "^24.13.3",

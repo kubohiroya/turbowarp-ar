@@ -3,6 +3,13 @@ import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
 import {AR_SCENE_LAYERS, DEFAULT_AR_LAYER, type ARSceneLayer} from './plan';
 import {
+  readCameraSourceRuntime,
+  type CameraFrameSource,
+  type CameraLease,
+  type CameraSourceRuntime,
+  type Flip
+} from '@kubohiroya/turbowarp-camera-source/runtime';
+import {
   createRuntimeCapability,
   runtimeCapabilityKey,
   type ARRuntimeCapabilityV1
@@ -28,47 +35,14 @@ interface BlockDefinition {
   arguments: Record<string, DefinitionArgument>;
 }
 
-interface CameraFrameSource {
-  readonly kind: 'video';
-  readonly element: HTMLVideoElement;
-  readonly width: number;
-  readonly height: number;
-  /**
-   * How Camera Source is drawing its own preview of these frames.
-   *
-   * A flip is a rendering choice and never reaches the pixels, so the background shown here is
-   * turned over to match what the operator is already looking at rather than because the frames
-   * arrived that way.
-   */
-  readonly previewFlip: PreviewFlip;
-  readonly deviceId: string;
-}
-
-/** The flip vocabulary Camera Source publishes on a frame source. */
-type PreviewFlip = 'none' | 'horizontal' | 'vertical' | 'both';
-
 /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
-function backgroundTransform(flip: PreviewFlip | undefined): string {
+function backgroundTransform(flip: Flip | undefined): string {
   const horizontal = flip === 'horizontal' || flip === 'both';
   const vertical = flip === 'vertical' || flip === 'both';
   if (horizontal && vertical) return 'scale(-1, -1)';
   if (horizontal) return 'scaleX(-1)';
   if (vertical) return 'scaleY(-1)';
   return '';
-}
-
-interface CameraLease {
-  getFrameSource(): CameraFrameSource;
-  release(): Promise<void>;
-}
-
-interface CameraSourceRuntime {
-  acquireCamera(options: {
-    owner?: string;
-    cameraId?: string;
-    deviceId?: string;
-    previewFlip?: PreviewFlip;
-  }): Promise<CameraLease>;
 }
 
 interface ARTargetState {
@@ -123,7 +97,6 @@ const AFRAME_SCENE_PORT_METHODS = [
 ] as const;
 
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
-const CAMERA_SOURCE_RUNTIME_ID = 'ext_kubohiroyacamerasource';
 const AFRAME_CAPABILITY_KEY = 'turbowarpAFrameCapability';
 const EXTENSION_OWNER = 'turbowarp-ar';
 
@@ -349,16 +322,7 @@ export class TurboWarpARExtension implements TurboWarpExtension {
   }
 
   private cameraSource(): CameraSourceRuntime | null {
-    const candidate = Scratch.vm.runtime[CAMERA_SOURCE_RUNTIME_ID];
-    if (
-      typeof candidate === 'object' &&
-      candidate !== null &&
-      'acquireCamera' in candidate &&
-      typeof candidate.acquireCamera === 'function'
-    ) {
-      return candidate as CameraSourceRuntime;
-    }
-    return null;
+    return readCameraSourceRuntime(Scratch.vm.runtime) ?? null;
   }
 
   private async releaseLease(lease: CameraLease): Promise<void> {
