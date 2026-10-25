@@ -2,7 +2,7 @@
 
 <img src="assets/block-icon.svg" alt="" width="48" height="48">
 
-[English](README.md) | **日本語**
+[English](README.md) | 日本語
 
 TurboWarp-AR は、共有カメラの映像を TurboWarp ステージの背面に敷き、scene node が追従できる名前付きの target pose を保持する拡張です。カメラ取得は `turbowarp-camera-source` に委譲し、A-Frame node への書き込みは `turbowarp-aframe` が読み込まれていればその runtime capability を通して行います。
 
