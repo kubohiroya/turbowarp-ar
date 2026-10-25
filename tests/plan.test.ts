@@ -13,7 +13,7 @@ describe('TurboWarp AR scene plans', () => {
       })
     ).toEqual({
       cameraId: 'default',
-      layer: 'camera-under-3d',
+      layer: 'above-stage',
       targets: [{targetId: 'marker-1', selector: '#scene-box-1'}]
     });
   });
@@ -37,7 +37,7 @@ describe('TurboWarp AR scene plans', () => {
       {
         extension: 'turbowarp-ar',
         opcode: 'createARScene',
-        args: {CAMERA_ID: 'front', LAYER: 'camera-under-3d'}
+        args: {CAMERA_ID: 'front', LAYER: 'above-stage'}
       },
       {
         extension: 'turbowarp-ar',
@@ -65,5 +65,13 @@ describe('TurboWarp AR scene plans', () => {
     expect(() => validateARSceneControl({targets: [{targetId: '', selector: '#card'}]})).toThrow(
       'TurboWarp AR ar.targets[0].targetId must be a non-empty string.'
     );
+  });
+
+  it('rejects a layer outside the vocabulary the extension understands', () => {
+    expect(() => validateARSceneControl({layer: 'camera-under-3d'})).toThrow(
+      'TurboWarp AR scene control ar.layer must be one of above-stage, below-stage.'
+    );
+    expect(() => validateARSceneControl({layer: 'below-stage'})).not.toThrow();
+    expect(normalizeARSceneControl({layer: 'below-stage'})).toMatchObject({layer: 'below-stage'});
   });
 });

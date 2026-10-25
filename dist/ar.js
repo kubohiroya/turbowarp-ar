@@ -7,308 +7,979 @@
 (function (Scratch) {
   'use strict';
 
-  const extensionConfig = {
-    id: "kubohiroyaar",
-    name: "TurboWarp-AR",
-    docsURI: "https://kubohiroya.github.io/turbowarp-ar/",
-    blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNCIgeT0iOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiByeD0iMyIgZmlsbD0iIzRDOTdGRiIvPjxyZWN0IHg9IjI2IiB5PSI4IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjNTlDMDU5Ii8+PHJlY3QgeD0iMTUiIHk9IjI2IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHJ4PSIzIiBmaWxsPSIjRkZBQjE5Ii8+PC9zdmc+"
+  var extensionConfig = {
+  	id: "kubohiroyaar",
+  	slug: "ar",
+  	name: "TurboWarp-AR",
+  	description: "A TurboWarp extension for camera-source based AR target state.",
+  	author: "Hiroya Kubo",
+  	license: "MPL-2.0",
+  	unsandboxed: true,
+  	docsURI: "https://kubohiroya.github.io/turbowarp-ar/",
+  	blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZD0iTTI0IDlsMTIgN3YxM2wtMTIgNy0xMi03VjE2eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNEM5N0ZGIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik05IDQxaDMwIiBmaWxsPSJub25lIiBzdHJva2U9IiM1OUMwNTkiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"
   };
-  const extensionName = "TurboWarp-AR";
-  const blocks = [{ "opcode": "createARScene", "blockType": "COMMAND", "text": "create AR scene with camera [CAMERA_ID] layer [LAYER]", "description": "Starts an AR session by acquiring a shared camera-source camera lease.", "arguments": { "CAMERA_ID": { "type": "STRING", "defaultValue": "default" }, "LAYER": { "type": "STRING", "defaultValue": "above-stage" } } }, { "opcode": "stopARScene", "blockType": "COMMAND", "text": "stop AR scene", "description": "Stops the AR session and releases the shared camera lease.", "arguments": {} }, { "opcode": "arStatus", "blockType": "REPORTER", "text": "AR status", "description": "Returns the AR session status.", "arguments": {} }, { "opcode": "isARSceneRunning", "blockType": "BOOLEAN", "text": "AR scene is running?", "description": "Reports whether the AR session is running.", "arguments": {} }, { "opcode": "defineARTarget", "blockType": "COMMAND", "text": "define AR target [TARGET_ID]", "description": "Creates or resets a named AR target state.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "setARTargetVisible", "blockType": "COMMAND", "text": "set AR target [TARGET_ID] visible [VISIBLE] confidence [CONFIDENCE]", "description": "Updates a target's visibility and confidence using the manual MVP backend.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" }, "VISIBLE": { "type": "BOOLEAN", "defaultValue": true }, "CONFIDENCE": { "type": "NUMBER", "defaultValue": 1 } } }, { "opcode": "setARTargetPosition", "blockType": "COMMAND", "text": "set AR target [TARGET_ID] position x [X] y [Y] z [Z]", "description": "Updates a target's position in AR scene coordinates.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" }, "X": { "type": "NUMBER", "defaultValue": 0 }, "Y": { "type": "NUMBER", "defaultValue": 0 }, "Z": { "type": "NUMBER", "defaultValue": -1 } } }, { "opcode": "setARTargetRotation", "blockType": "COMMAND", "text": "set AR target [TARGET_ID] rotation x [X] y [Y] z [Z]", "description": "Updates a target's Euler rotation in degrees.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" }, "X": { "type": "NUMBER", "defaultValue": 0 }, "Y": { "type": "NUMBER", "defaultValue": 0 }, "Z": { "type": "NUMBER", "defaultValue": 0 } } }, { "opcode": "isARTargetVisible", "blockType": "BOOLEAN", "text": "AR target [TARGET_ID] is visible?", "description": "Reports whether the target is currently visible.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "arTargetConfidence", "blockType": "REPORTER", "text": "AR target [TARGET_ID] confidence", "description": "Returns the target confidence from 0 to 1.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "arTargetPosition", "blockType": "REPORTER", "text": "AR target [TARGET_ID] position [AXIS]", "description": "Returns one axis of the target position.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" }, "AXIS": { "type": "STRING", "defaultValue": "x" } } }, { "opcode": "arTargetRotation", "blockType": "REPORTER", "text": "AR target [TARGET_ID] rotation [AXIS]", "description": "Returns one axis of the target rotation.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" }, "AXIS": { "type": "STRING", "defaultValue": "y" } } }, { "opcode": "whenARTargetFound", "blockType": "HAT", "text": "when AR target [TARGET_ID] found", "description": "Fires once when a target transitions from hidden to visible.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "whenARTargetLost", "blockType": "HAT", "text": "when AR target [TARGET_ID] lost", "description": "Fires once when a target transitions from visible to hidden.", "arguments": { "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "attachSelectorToARTarget", "blockType": "COMMAND", "text": "attach selector [SELECTOR] to AR target [TARGET_ID]", "description": "Synchronizes matching DOM or A-Frame nodes to an AR target pose.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "TARGET_ID": { "type": "STRING", "defaultValue": "marker-1" } } }, { "opcode": "detachSelectorFromARTarget", "blockType": "COMMAND", "text": "detach selector [SELECTOR] from AR target", "description": "Stops synchronizing a selector to any AR target.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" } } }];
-  const definitions = {
-    extensionName,
-    blocks
+  var numberToken = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/u;
+  var invalidNumber = Object.freeze({
+  	kind: "invalid",
+  	code: "fixed-number-input-invalid"
+  });
+  /**
+  * Parse a NEW numeric draft according to NP-finite-new-input-v1.
+  * Never apply this to opening/no-op raw values or use it as an owner validator.
+  * Keep the validated token so negative zero, precision and exponent spelling survive.
+  */
+  function parseFixedNumberInput(input) {
+  	if (typeof input === "number") {
+  		if (!Number.isFinite(input)) return invalidNumber;
+  		return Object.freeze({
+  			kind: "valid",
+  			token: Object.is(input, -0) ? "-0" : String(input),
+  			value: input
+  		});
+  	}
+  	if (typeof input !== "string") return invalidNumber;
+  	const token = input.trim();
+  	if (!numberToken.test(token)) return invalidNumber;
+  	const value = Number(token);
+  	return Number.isFinite(value) ? Object.freeze({
+  		kind: "valid",
+  		token,
+  		value
+  	}) : invalidNumber;
+  }
+  var block_editor_fixed_inputs_schema_default = {
+  	$schema: "https://json-schema.org/draft/2020-12/schema",
+  	$id: "https://kubohiroya.github.io/turbowarp-ar/schemas/block-editor-fixed-inputs.schema.json",
+  	$defs: {
+  		"createARScene": {
+  			"type": "object",
+  			"properties": { "LAYER": {
+  				"type": "string",
+  				"enum": ["above-stage", "below-stage"]
+  			} },
+  			"additionalProperties": false
+  		},
+  		"setARTargetVisible": {
+  			"type": "object",
+  			"properties": { "CONFIDENCE": { "type": "number" } },
+  			"additionalProperties": false
+  		},
+  		"setARTargetPosition": {
+  			"type": "object",
+  			"properties": {
+  				"X": { "type": "number" },
+  				"Y": { "type": "number" },
+  				"Z": { "type": "number" }
+  			},
+  			"additionalProperties": false
+  		},
+  		"setARTargetRotation": {
+  			"type": "object",
+  			"properties": {
+  				"X": { "type": "number" },
+  				"Y": { "type": "number" },
+  				"Z": { "type": "number" }
+  			},
+  			"additionalProperties": false
+  		},
+  		"arTargetPosition": {
+  			"type": "object",
+  			"properties": { "AXIS": {
+  				"type": "string",
+  				"enum": [
+  					"x",
+  					"y",
+  					"z"
+  				]
+  			} },
+  			"additionalProperties": false
+  		},
+  		"arTargetRotation": {
+  			"type": "object",
+  			"properties": { "AXIS": {
+  				"type": "string",
+  				"enum": [
+  					"x",
+  					"y",
+  					"z"
+  				]
+  			} },
+  			"additionalProperties": false
+  		}
+  	}
   };
-  const blockDefinitions = definitions.blocks;
-  const CAMERA_SOURCE_RUNTIME_ID = "ext_kubohiroyacamerasource";
-  const EXTENSION_OWNER = "turbowarp-ar";
-  class TurboWarpARExtension {
-    constructor() {
-      this.targets = /* @__PURE__ */ new Map();
-      this.targetEvents = [];
-      this.status = "idle";
-      this.session = null;
-      this.sceneGeneration = 0;
-    }
-    getInfo() {
-      return {
-        id: extensionConfig.id,
-        name: Scratch.translate(definitions.extensionName),
-        docsURI: extensionConfig.docsURI,
-        blockIconURI: extensionConfig.blockIconURI,
-        blocks: blockDefinitions.map((block) => this.toScratchBlock(block))
-      };
-    }
-    async createARScene(args) {
-      await this.stopARScene();
-      const cameraSource = this.cameraSource();
-      if (cameraSource === null) {
-        this.status = "no-camera-source";
-        return;
-      }
-      const cameraId = this.normalizeId(Scratch.Cast.toString(args.CAMERA_ID), "default");
-      const layer = this.normalizeLayer(Scratch.Cast.toString(args.LAYER));
-      const generation = ++this.sceneGeneration;
-      let lease = null;
-      let background = null;
-      this.status = "starting";
-      try {
-        lease = await cameraSource.acquireCamera({ owner: EXTENSION_OWNER, cameraId });
-        if (generation !== this.sceneGeneration) {
-          await this.releaseLease(lease);
-          return;
-        }
-        background = this.createBackground(lease.getFrameSource(), cameraId, layer);
-        if (generation !== this.sceneGeneration) {
-          background?.remove();
-          await this.releaseLease(lease);
-          return;
-        }
-        this.session = { cameraId, layer, lease, background };
-        this.status = "running";
-        this.syncAllAttachments();
-      } catch {
-        background?.remove();
-        if (lease !== null) {
-          await this.releaseLease(lease);
-        }
-        if (generation === this.sceneGeneration) {
-          this.status = "camera-error";
-          this.session = null;
-        }
-      }
-    }
-    async stopARScene() {
-      this.sceneGeneration++;
-      const current = this.session;
-      this.session = null;
-      current?.background?.remove();
-      if (current !== null) {
-        await this.releaseLease(current.lease);
-      }
-      this.status = "idle";
-    }
-    arStatus() {
-      return this.status;
-    }
-    isARSceneRunning() {
-      return this.status === "running" && this.session !== null;
-    }
-    defineARTarget(args) {
-      const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
-      target.visible = false;
-      target.confidence = 0;
-      target.position = { x: 0, y: 0, z: 0 };
-      target.rotation = { x: 0, y: 0, z: 0 };
-      this.syncTargetAttachments(target);
-    }
-    setARTargetVisible(args) {
-      const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
-      const nextVisible = Scratch.Cast.toBoolean(args.VISIBLE);
-      const previousVisible = target.visible;
-      target.visible = nextVisible;
-      target.confidence = this.clamp01(Scratch.Cast.toNumber(args.CONFIDENCE));
-      if (!previousVisible && nextVisible) {
-        this.targetEvents.push({ type: "found", targetId: target.id });
-      } else if (previousVisible && !nextVisible) {
-        this.targetEvents.push({ type: "lost", targetId: target.id });
-      }
-      this.syncTargetAttachments(target);
-    }
-    setARTargetPosition(args) {
-      const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
-      target.position = this.argsToVec3(args);
-      this.syncTargetAttachments(target);
-    }
-    setARTargetRotation(args) {
-      const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
-      target.rotation = this.argsToVec3(args);
-      this.syncTargetAttachments(target);
-    }
-    isARTargetVisible(args) {
-      return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.visible ?? false;
-    }
-    arTargetConfidence(args) {
-      return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.confidence ?? 0;
-    }
-    arTargetPosition(args) {
-      const target = this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)));
-      return target?.position[this.normalizeAxis(Scratch.Cast.toString(args.AXIS))] ?? 0;
-    }
-    arTargetRotation(args) {
-      const target = this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)));
-      return target?.rotation[this.normalizeAxis(Scratch.Cast.toString(args.AXIS))] ?? 0;
-    }
-    whenARTargetFound(args) {
-      return this.consumeTargetEvent("found", Scratch.Cast.toString(args.TARGET_ID));
-    }
-    whenARTargetLost(args) {
-      return this.consumeTargetEvent("lost", Scratch.Cast.toString(args.TARGET_ID));
-    }
-    attachSelectorToARTarget(args) {
-      const selector = Scratch.Cast.toString(args.SELECTOR).trim();
-      if (selector.length === 0) return;
-      const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
-      target.attachedSelectors.add(selector);
-      this.syncTargetAttachments(target);
-    }
-    detachSelectorFromARTarget(args) {
-      const selector = Scratch.Cast.toString(args.SELECTOR).trim();
-      if (selector.length === 0) return;
-      for (const target of this.targets.values()) {
-        target.attachedSelectors.delete(selector);
-      }
-    }
-    snapshot() {
-      return {
-        status: this.status,
-        session: this.session === null ? null : {
-          cameraId: this.session.cameraId,
-          layer: this.session.layer
-        },
-        targets: [...this.targets.values()].map((target) => ({
-          id: target.id,
-          visible: target.visible,
-          confidence: target.confidence,
-          position: target.position,
-          rotation: target.rotation,
-          attachedSelectors: [...target.attachedSelectors].sort()
-        }))
-      };
-    }
-    cameraSource() {
-      const candidate = Scratch.vm.runtime[CAMERA_SOURCE_RUNTIME_ID];
-      if (typeof candidate === "object" && candidate !== null && "acquireCamera" in candidate && typeof candidate.acquireCamera === "function") {
-        return candidate;
-      }
-      return null;
-    }
-    async releaseLease(lease) {
-      try {
-        await lease.release();
-      } catch {
-      }
-    }
-    createBackground(source, cameraId, layer) {
-      if (typeof document === "undefined") return null;
-      const existing = document.getElementById("tw-ar-root");
-      existing?.remove();
-      const host = document.createElement("div");
-      host.id = "tw-ar-root";
-      host.dataset["twArCameraId"] = cameraId;
-      host.dataset["twArLayer"] = layer;
-      host.style.position = "absolute";
-      host.style.inset = "0";
-      host.style.overflow = "hidden";
-      host.style.pointerEvents = "none";
-      host.style.zIndex = layer === "below-stage" ? "0" : "9";
-      const video = document.createElement("video");
-      video.muted = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      video.srcObject = source.element.srcObject;
-      video.dataset["twArBackground"] = "true";
-      video.style.width = "100%";
-      video.style.height = "100%";
-      video.style.objectFit = "cover";
-      video.style.transform = source.mirrored ? "scaleX(-1)" : "";
-      host.append(video);
-      document.body.append(host);
-      void video.play();
-      return host;
-    }
-    ensureTarget(value) {
-      const id = this.normalizeId(value);
-      const existing = this.targets.get(id);
-      if (existing !== void 0) return existing;
-      const target = {
-        id,
-        visible: false,
-        confidence: 0,
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        attachedSelectors: /* @__PURE__ */ new Set()
-      };
-      this.targets.set(id, target);
-      return target;
-    }
-    consumeTargetEvent(type, targetId) {
-      const normalizedId = this.normalizeId(targetId);
-      const index = this.targetEvents.findIndex(
-        (event) => event.type === type && event.targetId === normalizedId
-      );
-      if (index < 0) return false;
-      this.targetEvents.splice(index, 1);
-      return true;
-    }
-    syncAllAttachments() {
-      for (const target of this.targets.values()) {
-        this.syncTargetAttachments(target);
-      }
-    }
-    syncTargetAttachments(target) {
-      if (typeof document === "undefined") return;
-      for (const selector of target.attachedSelectors) {
-        for (const element of this.elementsForSelector(selector)) {
-          element.setAttribute("visible", String(target.visible));
-          element.setAttribute("position", this.formatVec3(target.position));
-          element.setAttribute("rotation", this.formatVec3(target.rotation));
-          element.setAttribute("data-ar-target", target.id);
-          element.setAttribute("data-ar-confidence", String(target.confidence));
-        }
-      }
-    }
-    elementsForSelector(selector) {
-      try {
-        return [...document.querySelectorAll(selector)];
-      } catch {
-        return [];
-      }
-    }
-    argsToVec3(args) {
-      return {
-        x: Scratch.Cast.toNumber(args.X),
-        y: Scratch.Cast.toNumber(args.Y),
-        z: Scratch.Cast.toNumber(args.Z)
-      };
-    }
-    formatVec3(value) {
-      return `${value.x} ${value.y} ${value.z}`;
-    }
-    normalizeAxis(value) {
-      const axis = value.trim().toLowerCase();
-      return axis === "y" || axis === "z" ? axis : "x";
-    }
-    normalizeLayer(value) {
-      return value.trim() === "below-stage" ? "below-stage" : "above-stage";
-    }
-    normalizeId(value, fallback = "target") {
-      return value.trim().replace(/[^a-zA-Z0-9_-]/g, "-") || fallback;
-    }
-    clamp01(value) {
-      if (!Number.isFinite(value)) return 0;
-      return Math.max(0, Math.min(1, value));
-    }
-    toScratchBlock(block) {
-      return {
-        opcode: block.opcode,
-        blockType: Scratch.BlockType[block.blockType],
-        text: Scratch.translate(block.text),
-        arguments: Object.fromEntries(
-          Object.entries(block.arguments).map(([name, argument]) => [
-            name,
-            {
-              type: Scratch.ArgumentType[argument.type],
-              defaultValue: argument.defaultValue
-            }
-          ])
-        )
-      };
-    }
+  /** Canonical fixed field fragments; URI is identity only, never fetched. */
+  function fixedInputBundle(opcode, argument) {
+  	const source = {
+  		repository: "turbowarp-ar",
+  		path: "schemas/block-editor-fixed-inputs.schema.json",
+  		symbol: `#/$defs/${opcode}/properties/${argument}`
+  	};
+  	const definitions = block_editor_fixed_inputs_schema_default.$defs;
+  	return {
+  		identity: {
+  			ownerId: "turbowarp-ar",
+  			contractId: "fixed-inputs",
+  			revision: "1",
+  			variantId: opcode + "." + argument
+  		},
+  		dialect: "2020-12",
+  		root: {
+  			retrievalUri: block_editor_fixed_inputs_schema_default.$id,
+  			document: definitions[opcode].properties[argument],
+  			artifact: {
+  				role: "canonical-schema",
+  				source
+  			}
+  		},
+  		resources: [],
+  		provenance: {
+  			canonicalSources: [source, ...[{
+  				"repository": "turbowarp-ar",
+  				"path": "src/extension.ts",
+  				"symbol": "normalizeAxis / normalizeLayer / clamp01 / argsToVec3"
+  			}]],
+  			generatedFiles: [{
+  				repository: "turbowarp-ar",
+  				path: "docs/schemas/block-editor-fixed-inputs.schema.json"
+  			}],
+  			generationSources: [{
+  				repository: "turbowarp-ar",
+  				path: "scripts/generate-fixed-input-docs.mjs"
+  			}],
+  			referenceSchemas: []
+  		}
+  	};
   }
-  if (!Scratch.extensions.unsandboxed) {
-    throw new Error(`${extensionConfig.name} must run unsandboxed.`);
+  var invalid = () => [{ message: "Invalid fixed input." }];
+  function number(value) {
+  	if (typeof value !== "number" && typeof value !== "string" || typeof value === "string" && value.trim() === "") throw new TypeError("Unrepresentable numeric literal.");
+  	const result = Number(value);
+  	if (!Number.isFinite(result)) throw new TypeError("Nonfinite numeric literal.");
+  	return result;
   }
+  function numericBinding(opcode, argument) {
+  	return {
+  		argument,
+  		schemaBundle: fixedInputBundle(opcode, argument),
+  		control: {
+  			label: argument,
+  			kind: "number"
+  		},
+  		read: number,
+  		encode(value) {
+  			const parsed = parseFixedNumberInput(value);
+  			if (parsed.kind !== "valid") throw new TypeError("Invalid numeric token.");
+  			return parsed.token;
+  		},
+  		validateCandidate(candidate, _context, finalSnapshot) {
+  			try {
+  				number(candidate);
+  				return ownerCheck(opcode, argument, candidate, finalSnapshot) ? [] : invalid();
+  			} catch {
+  				return invalid();
+  			}
+  		}
+  	};
+  }
+  function enumBinding(opcode, argument, choices, normalization) {
+  	const project = (value) => {
+  		if (typeof value !== "string") return value;
+  		const normalized = normalization === "none" ? value : normalization === "trim" ? value.trim() : value.trim().toLowerCase();
+  		return choices.includes(normalized) ? normalized : value;
+  	};
+  	return {
+  		argument,
+  		schemaBundle: fixedInputBundle(opcode, argument),
+  		control: {
+  			label: argument,
+  			kind: "enum",
+  			choices: choices.map((value) => ({ value }))
+  		},
+  		read: project,
+  		encode(value) {
+  			if (typeof value !== "string" || !choices.includes(value)) throw new TypeError("Choose a known value.");
+  			return value;
+  		},
+  		validateCandidate(candidate, _context, finalSnapshot) {
+  			try {
+  				return typeof candidate === "string" && choices.includes(candidate) && ownerCheck(opcode, argument, candidate, finalSnapshot) ? [] : invalid();
+  			} catch {
+  				return invalid();
+  			}
+  		}
+  	};
+  }
+  function ownerCheck(_opcode, _argument, _candidate, _snapshot) {
+  	return true;
+  }
+  var extensionId = "kubohiroyaar";
+  var validationContext = () => ({
+  	consumerId: "turbowarp-ar",
+  	nowMs: 0,
+  	settings: null
+  });
+  var fixedInputEditors = [
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "createARScene-fixed",
+  		opcodes: [`${extensionId}_createARScene`],
+  		contractId: "turbowarp-ar/createARScene",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("createARScene", "LAYER", ["above-stage", "below-stage"], "trim")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetVisible-fixed",
+  		opcodes: [`${extensionId}_setARTargetVisible`],
+  		contractId: "turbowarp-ar/setARTargetVisible",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: ["VISIBLE"],
+  		bindings: [numericBinding("setARTargetVisible", "CONFIDENCE")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetPosition-fixed",
+  		opcodes: [`${extensionId}_setARTargetPosition`],
+  		contractId: "turbowarp-ar/setARTargetPosition",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [
+  			numericBinding("setARTargetPosition", "X"),
+  			numericBinding("setARTargetPosition", "Y"),
+  			numericBinding("setARTargetPosition", "Z")
+  		]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "setARTargetRotation-fixed",
+  		opcodes: [`${extensionId}_setARTargetRotation`],
+  		contractId: "turbowarp-ar/setARTargetRotation",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [
+  			numericBinding("setARTargetRotation", "X"),
+  			numericBinding("setARTargetRotation", "Y"),
+  			numericBinding("setARTargetRotation", "Z")
+  		]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "arTargetPosition-fixed",
+  		opcodes: [`${extensionId}_arTargetPosition`],
+  		contractId: "turbowarp-ar/arTargetPosition",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("arTargetPosition", "AXIS", [
+  			"x",
+  			"y",
+  			"z"
+  		], "trim-lower")]
+  	},
+  	{
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: "arTargetRotation-fixed",
+  		opcodes: [`${extensionId}_arTargetRotation`],
+  		contractId: "turbowarp-ar/arTargetRotation",
+  		contractRevision: "1",
+  		validationContext,
+  		readOnlyArguments: [],
+  		bindings: [enumBinding("arTargetRotation", "AXIS", [
+  			"x",
+  			"y",
+  			"z"
+  		], "trim-lower")]
+  	}
+  ];
+  /** Register metadata only; the GUI startup capability owns editor activation. */
+  function registerFixedInputEditors(scratch, definitions, runtimeOverride) {
+  	const host = scratch;
+  	const api = host.gui?.blockEditors;
+  	if (!definitions.length || api?.apiVersion !== 1 || typeof api.registerFixedInputEditor !== "function") return () => {};
+  	const runtime = runtimeOverride ?? host.vm?.runtime;
+  	const removers = [];
+  	let active = true;
+  	const dispose = () => {
+  		if (!active) return;
+  		active = false;
+  		runtime?.off?.("RUNTIME_DISPOSED", dispose);
+  		for (const remove of removers.splice(0).reverse()) remove();
+  	};
+  	try {
+  		for (const definition of definitions) {
+  			const remove = api.registerFixedInputEditor.call(api, definition);
+  			if (typeof remove !== "function") throw new TypeError("Invalid fixed input registration disposer.");
+  			removers.push(remove);
+  		}
+  		runtime?.on?.("RUNTIME_DISPOSED", dispose);
+  	} catch (error) {
+  		dispose();
+  		throw error;
+  	}
+  	return dispose;
+  }
+  var block_definitions_default = {
+  	extensionName: "TurboWarp-AR",
+  	blocks: [
+  		{
+  			"opcode": "createARScene",
+  			"blockType": "COMMAND",
+  			"text": "create AR scene with camera [CAMERA_ID] layer [LAYER]",
+  			"description": "Starts an AR session by acquiring a shared camera-source camera lease.",
+  			"arguments": {
+  				"CAMERA_ID": {
+  					"type": "STRING",
+  					"defaultValue": "default"
+  				},
+  				"LAYER": {
+  					"type": "STRING",
+  					"defaultValue": "above-stage"
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "stopARScene",
+  			"blockType": "COMMAND",
+  			"text": "stop AR scene",
+  			"description": "Stops the AR session and releases the shared camera lease.",
+  			"arguments": {}
+  		},
+  		{
+  			"opcode": "arStatus",
+  			"blockType": "REPORTER",
+  			"text": "AR status",
+  			"description": "Returns the AR session status.",
+  			"arguments": {}
+  		},
+  		{
+  			"opcode": "isARSceneRunning",
+  			"blockType": "BOOLEAN",
+  			"text": "AR scene is running?",
+  			"description": "Reports whether the AR session is running.",
+  			"arguments": {}
+  		},
+  		{
+  			"opcode": "defineARTarget",
+  			"blockType": "COMMAND",
+  			"text": "define AR target [TARGET_ID]",
+  			"description": "Creates or resets a named AR target state.",
+  			"arguments": { "TARGET_ID": {
+  				"type": "STRING",
+  				"defaultValue": "marker-1"
+  			} }
+  		},
+  		{
+  			"opcode": "setARTargetVisible",
+  			"blockType": "COMMAND",
+  			"text": "set AR target [TARGET_ID] visible [VISIBLE] confidence [CONFIDENCE]",
+  			"description": "Updates a target's visibility and confidence using the manual MVP backend.",
+  			"arguments": {
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				},
+  				"VISIBLE": {
+  					"type": "BOOLEAN",
+  					"defaultValue": true
+  				},
+  				"CONFIDENCE": {
+  					"type": "NUMBER",
+  					"defaultValue": 1
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "setARTargetPosition",
+  			"blockType": "COMMAND",
+  			"text": "set AR target [TARGET_ID] position x [X] y [Y] z [Z]",
+  			"description": "Updates a target's position in AR scene coordinates.",
+  			"arguments": {
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				},
+  				"X": {
+  					"type": "NUMBER",
+  					"defaultValue": 0
+  				},
+  				"Y": {
+  					"type": "NUMBER",
+  					"defaultValue": 0
+  				},
+  				"Z": {
+  					"type": "NUMBER",
+  					"defaultValue": -1
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "setARTargetRotation",
+  			"blockType": "COMMAND",
+  			"text": "set AR target [TARGET_ID] rotation x [X] y [Y] z [Z]",
+  			"description": "Updates a target's Euler rotation in degrees.",
+  			"arguments": {
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				},
+  				"X": {
+  					"type": "NUMBER",
+  					"defaultValue": 0
+  				},
+  				"Y": {
+  					"type": "NUMBER",
+  					"defaultValue": 0
+  				},
+  				"Z": {
+  					"type": "NUMBER",
+  					"defaultValue": 0
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "isARTargetVisible",
+  			"blockType": "BOOLEAN",
+  			"text": "AR target [TARGET_ID] is visible?",
+  			"description": "Reports whether the target is currently visible.",
+  			"arguments": { "TARGET_ID": {
+  				"type": "STRING",
+  				"defaultValue": "marker-1"
+  			} }
+  		},
+  		{
+  			"opcode": "arTargetConfidence",
+  			"blockType": "REPORTER",
+  			"text": "AR target [TARGET_ID] confidence",
+  			"description": "Returns the target confidence from 0 to 1.",
+  			"arguments": { "TARGET_ID": {
+  				"type": "STRING",
+  				"defaultValue": "marker-1"
+  			} }
+  		},
+  		{
+  			"opcode": "arTargetPosition",
+  			"blockType": "REPORTER",
+  			"text": "AR target [TARGET_ID] position [AXIS]",
+  			"description": "Returns one axis of the target position.",
+  			"arguments": {
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				},
+  				"AXIS": {
+  					"type": "STRING",
+  					"defaultValue": "x"
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "arTargetRotation",
+  			"blockType": "REPORTER",
+  			"text": "AR target [TARGET_ID] rotation [AXIS]",
+  			"description": "Returns one axis of the target rotation.",
+  			"arguments": {
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				},
+  				"AXIS": {
+  					"type": "STRING",
+  					"defaultValue": "y"
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "whenARTargetFound",
+  			"blockType": "HAT",
+  			"text": "when AR target [TARGET_ID] found",
+  			"description": "Fires once when a target transitions from hidden to visible.",
+  			"arguments": { "TARGET_ID": {
+  				"type": "STRING",
+  				"defaultValue": "marker-1"
+  			} }
+  		},
+  		{
+  			"opcode": "whenARTargetLost",
+  			"blockType": "HAT",
+  			"text": "when AR target [TARGET_ID] lost",
+  			"description": "Fires once when a target transitions from visible to hidden.",
+  			"arguments": { "TARGET_ID": {
+  				"type": "STRING",
+  				"defaultValue": "marker-1"
+  			} }
+  		},
+  		{
+  			"opcode": "attachSelectorToARTarget",
+  			"blockType": "COMMAND",
+  			"text": "attach selector [SELECTOR] to AR target [TARGET_ID]",
+  			"description": "Synchronizes matching DOM or A-Frame nodes to an AR target pose.",
+  			"arguments": {
+  				"SELECTOR": {
+  					"type": "STRING",
+  					"defaultValue": "#card"
+  				},
+  				"TARGET_ID": {
+  					"type": "STRING",
+  					"defaultValue": "marker-1"
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "detachSelectorFromARTarget",
+  			"blockType": "COMMAND",
+  			"text": "detach selector [SELECTOR] from AR target",
+  			"description": "Stops synchronizing a selector to any AR target.",
+  			"arguments": { "SELECTOR": {
+  				"type": "STRING",
+  				"defaultValue": "#card"
+  			} }
+  		}
+  	]
+  };
+  var AR_SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
+  /** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
+  var DEFAULT_AR_LAYER = "above-stage";
+  /**
+  * Where the extension instance puts itself on the VM runtime.
+  *
+  * Present as soon as the extension is registered. Absent means Camera Source is not loaded, which a
+  * consumer has to handle whatever else it does.
+  */
+  var cameraSourceRuntimeKey = "ext_kubohiroyacamerasource";
+  /** Narrows a runtime value to the Camera Source surface, so a missing extension reads as absent. */
+  function readCameraSourceRuntime(runtime) {
+  	if (typeof runtime !== "object" || runtime === null) return void 0;
+  	const candidate = runtime[cameraSourceRuntimeKey];
+  	if (typeof candidate !== "object" || candidate === null) return void 0;
+  	const { acquireCamera } = candidate;
+  	return typeof acquireCamera === "function" ? candidate : void 0;
+  }
+  var runtimeCapabilityKey = "turbowarpARCapability";
+  function createRuntimeCapability(scene) {
+  	const capability = Object.freeze({
+  		version: 1,
+  		requireVersion(version) {
+  			if (version !== 1) throw new Error(`Unsupported TurboWarp AR runtime capability version: ${version}; supported version is 1.`);
+  			return capability;
+  		},
+  		async createARScene(cameraId, layer) {
+  			await scene.createARScene(cameraId, layer);
+  		},
+  		async stopARScene() {
+  			await scene.stopARScene();
+  		},
+  		defineARTarget(targetId) {
+  			scene.defineARTarget(targetId);
+  		},
+  		attachSelectorToARTarget(selector, targetId) {
+  			scene.attachSelectorToARTarget(selector, targetId);
+  		},
+  		detachSelectorFromARTarget(selector) {
+  			scene.detachSelectorFromARTarget(selector);
+  		},
+  		arStatus() {
+  			return scene.arStatus();
+  		}
+  	});
+  	return capability;
+  }
+  /** Matches the background to the preview. An unknown value leaves the image as it arrived. */
+  function backgroundTransform(flip) {
+  	const horizontal = flip === "horizontal" || flip === "both";
+  	const vertical = flip === "vertical" || flip === "both";
+  	if (horizontal && vertical) return "scale(-1, -1)";
+  	if (horizontal) return "scaleX(-1)";
+  	if (vertical) return "scaleY(-1)";
+  	return "";
+  }
+  /**
+  * Stacking positions for the two hosts that can share the stage.
+  *
+  * The camera background sits one step below `turbowarp-aframe`'s 3D scene host, which uses 10, so
+  * a 3D scene on the same layer always renders over the camera image. Keep the two in step when
+  * either extension changes its host stacking.
+  */
+  var AR_BACKGROUND_Z_INDEX = {
+  	"above-stage": "9",
+  	"below-stage": "0"
+  };
+  var AFRAME_SCENE_PORT_METHODS = [
+  	"setPosition",
+  	"setRotation",
+  	"setAttribute",
+  	"setData",
+  	"countSelector"
+  ];
+  var blockDefinitions = block_definitions_default.blocks;
+  var AFRAME_CAPABILITY_KEY = "turbowarpAFrameCapability";
+  var EXTENSION_OWNER = "turbowarp-ar";
+  var TurboWarpARExtension = class {
+  	constructor() {
+  		this.targets = /* @__PURE__ */ new Map();
+  		this.targetEvents = [];
+  		this.status = "idle";
+  		this.session = null;
+  		this.sceneGeneration = 0;
+  		this.removeFixedEditors = () => {};
+  		this.removeFixedEditors = registerFixedInputEditors(Scratch, fixedInputEditors);
+  		try {
+  			this.runtimeCapability = createRuntimeCapability({
+  				createARScene: (cameraId, layer) => this.createARScene({
+  					CAMERA_ID: cameraId,
+  					LAYER: layer
+  				}),
+  				stopARScene: () => this.stopARScene(),
+  				defineARTarget: (targetId) => this.defineARTarget({ TARGET_ID: targetId }),
+  				attachSelectorToARTarget: (selector, targetId) => this.attachSelectorToARTarget({
+  					SELECTOR: selector,
+  					TARGET_ID: targetId
+  				}),
+  				detachSelectorFromARTarget: (selector) => this.detachSelectorFromARTarget({ SELECTOR: selector }),
+  				arStatus: () => this.arStatus()
+  			});
+  			const runtime = Scratch.vm?.runtime;
+  			if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
+  		} catch (error) {
+  			this.removeFixedEditors();
+  			throw error;
+  		}
+  	}
+  	dispose() {
+  		this.removeFixedEditors();
+  	}
+  	getInfo() {
+  		return {
+  			id: extensionConfig.id,
+  			name: Scratch.translate(block_definitions_default.extensionName),
+  			docsURI: extensionConfig.docsURI,
+  			blockIconURI: extensionConfig.blockIconURI,
+  			blocks: blockDefinitions.map((block) => this.toScratchBlock(block))
+  		};
+  	}
+  	async createARScene(args) {
+  		await this.stopARScene();
+  		const cameraSource = this.cameraSource();
+  		if (cameraSource === null) {
+  			this.status = "no-camera-source";
+  			return;
+  		}
+  		const cameraId = this.normalizeId(Scratch.Cast.toString(args.CAMERA_ID), "default");
+  		const layer = this.normalizeLayer(Scratch.Cast.toString(args.LAYER));
+  		const generation = ++this.sceneGeneration;
+  		let lease = null;
+  		let background = null;
+  		this.status = "starting";
+  		try {
+  			lease = await cameraSource.acquireCamera({
+  				owner: EXTENSION_OWNER,
+  				cameraId
+  			});
+  			if (generation !== this.sceneGeneration) {
+  				await this.releaseLease(lease);
+  				return;
+  			}
+  			background = this.createBackground(lease.getFrameSource(), cameraId, layer);
+  			if (generation !== this.sceneGeneration) {
+  				background?.remove();
+  				await this.releaseLease(lease);
+  				return;
+  			}
+  			this.session = {
+  				cameraId,
+  				layer,
+  				lease,
+  				background
+  			};
+  			this.status = "running";
+  			this.syncAllAttachments();
+  		} catch {
+  			background?.remove();
+  			if (lease !== null) await this.releaseLease(lease);
+  			if (generation === this.sceneGeneration) {
+  				this.status = "camera-error";
+  				this.session = null;
+  			}
+  		}
+  	}
+  	async stopARScene() {
+  		this.sceneGeneration++;
+  		const current = this.session;
+  		this.session = null;
+  		current?.background?.remove();
+  		if (current !== null) await this.releaseLease(current.lease);
+  		this.status = "idle";
+  	}
+  	arStatus() {
+  		return this.status;
+  	}
+  	isARSceneRunning() {
+  		return this.status === "running" && this.session !== null;
+  	}
+  	defineARTarget(args) {
+  		const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
+  		target.visible = false;
+  		target.confidence = 0;
+  		target.position = {
+  			x: 0,
+  			y: 0,
+  			z: 0
+  		};
+  		target.rotation = {
+  			x: 0,
+  			y: 0,
+  			z: 0
+  		};
+  		this.syncTargetAttachments(target);
+  	}
+  	setARTargetVisible(args) {
+  		const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
+  		const nextVisible = Scratch.Cast.toBoolean(args.VISIBLE);
+  		const previousVisible = target.visible;
+  		target.visible = nextVisible;
+  		target.confidence = this.clamp01(Scratch.Cast.toNumber(args.CONFIDENCE));
+  		if (!previousVisible && nextVisible) this.targetEvents.push({
+  			type: "found",
+  			targetId: target.id
+  		});
+  		else if (previousVisible && !nextVisible) this.targetEvents.push({
+  			type: "lost",
+  			targetId: target.id
+  		});
+  		this.syncTargetAttachments(target);
+  	}
+  	setARTargetPosition(args) {
+  		const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
+  		target.position = this.argsToVec3(args);
+  		this.syncTargetAttachments(target);
+  	}
+  	setARTargetRotation(args) {
+  		const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
+  		target.rotation = this.argsToVec3(args);
+  		this.syncTargetAttachments(target);
+  	}
+  	isARTargetVisible(args) {
+  		return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.visible ?? false;
+  	}
+  	arTargetConfidence(args) {
+  		return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.confidence ?? 0;
+  	}
+  	arTargetPosition(args) {
+  		return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.position[this.normalizeAxis(Scratch.Cast.toString(args.AXIS))] ?? 0;
+  	}
+  	arTargetRotation(args) {
+  		return this.targets.get(this.normalizeId(Scratch.Cast.toString(args.TARGET_ID)))?.rotation[this.normalizeAxis(Scratch.Cast.toString(args.AXIS))] ?? 0;
+  	}
+  	whenARTargetFound(args) {
+  		return this.consumeTargetEvent("found", Scratch.Cast.toString(args.TARGET_ID));
+  	}
+  	whenARTargetLost(args) {
+  		return this.consumeTargetEvent("lost", Scratch.Cast.toString(args.TARGET_ID));
+  	}
+  	attachSelectorToARTarget(args) {
+  		const selector = Scratch.Cast.toString(args.SELECTOR).trim();
+  		if (selector.length === 0) return;
+  		const target = this.ensureTarget(Scratch.Cast.toString(args.TARGET_ID));
+  		target.attachedSelectors.add(selector);
+  		this.syncTargetAttachments(target);
+  	}
+  	detachSelectorFromARTarget(args) {
+  		const selector = Scratch.Cast.toString(args.SELECTOR).trim();
+  		if (selector.length === 0) return;
+  		for (const target of this.targets.values()) target.attachedSelectors.delete(selector);
+  	}
+  	snapshot() {
+  		return {
+  			status: this.status,
+  			session: this.session === null ? null : {
+  				cameraId: this.session.cameraId,
+  				layer: this.session.layer
+  			},
+  			targets: [...this.targets.values()].map((target) => ({
+  				id: target.id,
+  				visible: target.visible,
+  				confidence: target.confidence,
+  				position: target.position,
+  				rotation: target.rotation,
+  				attachedSelectors: [...target.attachedSelectors].sort()
+  			}))
+  		};
+  	}
+  	cameraSource() {
+  		return readCameraSourceRuntime(Scratch.vm.runtime) ?? null;
+  	}
+  	async releaseLease(lease) {
+  		try {
+  			await lease.release();
+  		} catch {}
+  	}
+  	createBackground(source, cameraId, layer) {
+  		if (typeof document === "undefined") return null;
+  		document.getElementById("tw-ar-root")?.remove();
+  		const host = document.createElement("div");
+  		host.id = "tw-ar-root";
+  		host.dataset["twArCameraId"] = cameraId;
+  		host.dataset["twArLayer"] = layer;
+  		host.style.position = "absolute";
+  		host.style.inset = "0";
+  		host.style.overflow = "hidden";
+  		host.style.pointerEvents = "none";
+  		host.style.zIndex = AR_BACKGROUND_Z_INDEX[layer];
+  		const video = document.createElement("video");
+  		video.muted = true;
+  		video.playsInline = true;
+  		video.autoplay = true;
+  		video.srcObject = source.element.srcObject;
+  		video.dataset["twArBackground"] = "true";
+  		video.style.width = "100%";
+  		video.style.height = "100%";
+  		video.style.objectFit = "cover";
+  		video.style.transform = backgroundTransform(source.previewFlip);
+  		host.append(video);
+  		document.body.append(host);
+  		video.play();
+  		return host;
+  	}
+  	ensureTarget(value) {
+  		const id = this.normalizeId(value);
+  		const existing = this.targets.get(id);
+  		if (existing !== void 0) return existing;
+  		const target = {
+  			id,
+  			visible: false,
+  			confidence: 0,
+  			position: {
+  				x: 0,
+  				y: 0,
+  				z: 0
+  			},
+  			rotation: {
+  				x: 0,
+  				y: 0,
+  				z: 0
+  			},
+  			attachedSelectors: /* @__PURE__ */ new Set()
+  		};
+  		this.targets.set(id, target);
+  		return target;
+  	}
+  	consumeTargetEvent(type, targetId) {
+  		const normalizedId = this.normalizeId(targetId);
+  		const index = this.targetEvents.findIndex((event) => event.type === type && event.targetId === normalizedId);
+  		if (index < 0) return false;
+  		this.targetEvents.splice(index, 1);
+  		return true;
+  	}
+  	syncAllAttachments() {
+  		for (const target of this.targets.values()) this.syncTargetAttachments(target);
+  	}
+  	syncTargetAttachments(target) {
+  		const scene = this.aframeScenePort();
+  		for (const selector of target.attachedSelectors) {
+  			if (scene !== null && this.writeTargetThroughAFrame(scene, selector, target)) continue;
+  			this.writeTargetThroughDom(selector, target);
+  		}
+  	}
+  	/**
+  	* Writes a target's pose through the A-Frame capability when A-Frame owns the matching nodes.
+  	*
+  	* Going through the port keeps the scene state A-Frame maintains in step with the attributes on
+  	* the page; writing those same nodes with the DOM directly would leave the two disagreeing. A
+  	* selector A-Frame does not own, or a capability that is absent or disposed, returns false so the
+  	* caller falls back to the plain DOM.
+  	*/
+  	writeTargetThroughAFrame(scene, selector, target) {
+  		try {
+  			if (scene.countSelector(selector) <= 0) return false;
+  			scene.setAttribute(selector, "visible", String(target.visible));
+  			scene.setPosition(selector, target.position.x, target.position.y, target.position.z);
+  			scene.setRotation(selector, target.rotation.x, target.rotation.y, target.rotation.z);
+  			scene.setData(selector, "ar-target", target.id);
+  			scene.setData(selector, "ar-confidence", String(target.confidence));
+  			return true;
+  		} catch {
+  			return false;
+  		}
+  	}
+  	/** Pose write-back for pages without A-Frame, and for nodes A-Frame does not own. */
+  	writeTargetThroughDom(selector, target) {
+  		if (typeof document === "undefined") return;
+  		for (const element of this.elementsForSelector(selector)) {
+  			element.setAttribute("visible", String(target.visible));
+  			element.setAttribute("position", this.formatVec3(target.position));
+  			element.setAttribute("rotation", this.formatVec3(target.rotation));
+  			element.setAttribute("data-ar-target", target.id);
+  			element.setAttribute("data-ar-confidence", String(target.confidence));
+  		}
+  	}
+  	aframeScenePort() {
+  		const candidate = Scratch.vm?.runtime?.[AFRAME_CAPABILITY_KEY];
+  		if (typeof candidate !== "object" || candidate === null) return null;
+  		const port = candidate;
+  		for (const method of AFRAME_SCENE_PORT_METHODS) if (typeof port[method] !== "function") return null;
+  		return candidate;
+  	}
+  	elementsForSelector(selector) {
+  		try {
+  			return [...document.querySelectorAll(selector)];
+  		} catch {
+  			return [];
+  		}
+  	}
+  	argsToVec3(args) {
+  		return {
+  			x: Scratch.Cast.toNumber(args.X),
+  			y: Scratch.Cast.toNumber(args.Y),
+  			z: Scratch.Cast.toNumber(args.Z)
+  		};
+  	}
+  	formatVec3(value) {
+  		return `${value.x} ${value.y} ${value.z}`;
+  	}
+  	normalizeAxis(value) {
+  		const axis = value.trim().toLowerCase();
+  		return axis === "y" || axis === "z" ? axis : "x";
+  	}
+  	/**
+  	* Blocks take whatever string a project hands them, so an unknown layer falls back to the default
+  	* rather than stopping the script. Planned calls do not rely on this: `validateARSceneControl`
+  	* rejects a layer outside the vocabulary before a plan is ever generated.
+  	*/
+  	normalizeLayer(value) {
+  		const layer = value.trim();
+  		return AR_SCENE_LAYERS.includes(layer) ? layer : DEFAULT_AR_LAYER;
+  	}
+  	normalizeId(value, fallback = "target") {
+  		return value.trim().replace(/[^a-zA-Z0-9_-]/g, "-") || fallback;
+  	}
+  	clamp01(value) {
+  		if (!Number.isFinite(value)) return 0;
+  		return Math.max(0, Math.min(1, value));
+  	}
+  	toScratchBlock(block) {
+  		return {
+  			opcode: block.opcode,
+  			blockType: Scratch.BlockType[block.blockType],
+  			text: Scratch.translate(block.text),
+  			arguments: Object.fromEntries(Object.entries(block.arguments).map(([name, argument]) => [name, {
+  				type: Scratch.ArgumentType[argument.type],
+  				defaultValue: argument.defaultValue
+  			}]))
+  		};
+  	}
+  };
+  if (extensionConfig.unsandboxed && !Scratch.extensions.unsandboxed) throw new Error(`${extensionConfig.name} must run unsandboxed.`);
   Scratch.extensions.register(new TurboWarpARExtension());
 
 })(Scratch);

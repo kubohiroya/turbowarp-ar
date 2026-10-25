@@ -1,5 +1,27 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  cameraSourceRuntimeKey,
+  type CameraFrameSource,
+  type CameraLease
+} from '@kubohiroya/turbowarp-camera-source/runtime';
 import {TurboWarpARExtension} from '../src/extension.js';
+import {
+  runtimeCapabilityKey,
+  runtimeCapabilityVersion,
+  type ARRuntimeCapabilityV1
+} from '../src/runtime-capability.js';
+
+/** A frame source shaped by the contract Camera Source publishes, not by a local copy of it. */
+function frameSource(deviceId: string): CameraFrameSource {
+  return {
+    kind: 'video',
+    element: {srcObject: null} as HTMLVideoElement,
+    width: 640,
+    height: 480,
+    previewFlip: 'none',
+    deviceId
+  };
+}
 
 function stubScratch(runtime: Record<string, unknown> = {}) {
   vi.stubGlobal('Scratch', {
@@ -80,16 +102,9 @@ describe('TurboWarpARExtension', () => {
   it('starts and stops a camera-source backed session', async () => {
     const release = vi.fn(async () => {});
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            mirrored: false,
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release
         }))
       }
@@ -110,7 +125,7 @@ describe('TurboWarpARExtension', () => {
   it('releases the camera lease when frame source setup fails', async () => {
     const release = vi.fn(async () => {});
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
           getFrameSource: () => {
             throw new Error('missing frame');
@@ -129,21 +144,15 @@ describe('TurboWarpARExtension', () => {
   });
 
   it('keeps the latest AR scene when starts resolve out of order', async () => {
-    const first = deferred<{
-      getFrameSource: () => HTMLVideoElement;
-      release: () => Promise<void>;
-    }>();
-    const second = deferred<{
-      getFrameSource: () => HTMLVideoElement;
-      release: () => Promise<void>;
-    }>();
+    const first = deferred<CameraLease>();
+    const second = deferred<CameraLease>();
     const firstRelease = vi.fn(async () => {});
     const secondRelease = vi.fn(async () => {});
     const acquireCamera = vi
       .fn()
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
-    stubScratch({ext_kubohiroyacamerasource: {acquireCamera}});
+    stubScratch({[cameraSourceRuntimeKey]: {acquireCamera}});
     const extension = new TurboWarpARExtension();
 
     const firstStart = extension.createARScene({CAMERA_ID: 'first', LAYER: 'above-stage'});
@@ -152,29 +161,13 @@ describe('TurboWarpARExtension', () => {
     await Promise.resolve();
 
     second.resolve({
-      getFrameSource: () =>
-        ({
-          kind: 'video',
-          element: {srcObject: null} as HTMLVideoElement,
-          width: 640,
-          height: 480,
-          mirrored: false,
-          deviceId: 'device-2'
-        }) as unknown as HTMLVideoElement,
+      getFrameSource: () => frameSource('device-2'),
       release: secondRelease
     });
     await secondStart;
 
     first.resolve({
-      getFrameSource: () =>
-        ({
-          kind: 'video',
-          element: {srcObject: null} as HTMLVideoElement,
-          width: 640,
-          height: 480,
-          mirrored: false,
-          deviceId: 'device-1'
-        }) as unknown as HTMLVideoElement,
+      getFrameSource: () => frameSource('device-1'),
       release: firstRelease
     });
     await firstStart;
@@ -190,16 +183,9 @@ describe('TurboWarpARExtension', () => {
       throw new Error('release failed');
     });
     stubScratch({
-      ext_kubohiroyacamerasource: {
+      [cameraSourceRuntimeKey]: {
         acquireCamera: vi.fn(async () => ({
-          getFrameSource: () => ({
-            kind: 'video',
-            element: {srcObject: null} as HTMLVideoElement,
-            width: 640,
-            height: 480,
-            mirrored: false,
-            deviceId: 'device-1'
-          }),
+          getFrameSource: () => frameSource('device-1'),
           release
         }))
       }
@@ -235,7 +221,7 @@ describe('TurboWarpARExtension', () => {
     expect(extension.whenARTargetLost({TARGET_ID: 'marker-1'})).toBe(false);
   });
 
-  it('syncs attached selectors to DOM or A-Frame attributes', () => {
+  it('falls back to plain DOM attributes when no A-Frame capability is present', () => {
     const attributes = new Map<string, string>();
     const element = {
       setAttribute: vi.fn((name: string, value: string) => attributes.set(name, value))
@@ -255,5 +241,135 @@ describe('TurboWarpARExtension', () => {
     expect(attributes.get('rotation')).toBe('10 20 30');
     expect(attributes.get('data-ar-target')).toBe('marker-1');
     expect(attributes.get('data-ar-confidence')).toBe('0.5');
+  });
+
+  it('writes attached pose through the A-Frame capability for nodes A-Frame owns', () => {
+    const port = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn((selector: string) => (selector === '#card' ? 1 : 0))
+    };
+    stubScratch({turbowarpAFrameCapability: port});
+    const element = {setAttribute: vi.fn()} as unknown as Element;
+    vi.stubGlobal('document', {querySelectorAll: vi.fn(() => [element])});
+    const extension = new TurboWarpARExtension();
+
+    extension.attachSelectorToARTarget({SELECTOR: '#card', TARGET_ID: 'marker-1'});
+    extension.setARTargetPosition({TARGET_ID: 'marker-1', X: 1, Y: 2, Z: 3});
+    extension.setARTargetRotation({TARGET_ID: 'marker-1', X: 10, Y: 20, Z: 30});
+    extension.setARTargetVisible({TARGET_ID: 'marker-1', VISIBLE: true, CONFIDENCE: 0.5});
+
+    expect(port.setPosition).toHaveBeenLastCalledWith('#card', 1, 2, 3);
+    expect(port.setRotation).toHaveBeenLastCalledWith('#card', 10, 20, 30);
+    expect(port.setAttribute).toHaveBeenLastCalledWith('#card', 'visible', 'true');
+    expect(port.setData).toHaveBeenCalledWith('#card', 'ar-target', 'marker-1');
+    expect(port.setData).toHaveBeenCalledWith('#card', 'ar-confidence', '0.5');
+    expect(element.setAttribute).not.toHaveBeenCalled();
+  });
+
+  it('uses the DOM for selectors A-Frame does not own, and for a disposed capability', () => {
+    const unowned = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn(() => 0)
+    };
+    const disposed = {
+      setPosition: vi.fn(),
+      setRotation: vi.fn(),
+      setAttribute: vi.fn(),
+      setData: vi.fn(),
+      countSelector: vi.fn(() => {
+        throw new Error('A-Frame runtime capability is disposed.');
+      })
+    };
+
+    for (const port of [unowned, disposed]) {
+      stubScratch({turbowarpAFrameCapability: port});
+      const attributes = new Map<string, string>();
+      vi.stubGlobal('document', {
+        querySelectorAll: vi.fn(() => [
+          {setAttribute: (name: string, value: string) => attributes.set(name, value)}
+        ])
+      });
+      const extension = new TurboWarpARExtension();
+
+      extension.attachSelectorToARTarget({SELECTOR: '#plain', TARGET_ID: 'marker-1'});
+      extension.setARTargetPosition({TARGET_ID: 'marker-1', X: 1, Y: 2, Z: 3});
+
+      expect(attributes.get('position')).toBe('1 2 3');
+      expect(port.setPosition).not.toHaveBeenCalled();
+    }
+  });
+
+  it('publishes a versioned AR scene capability that shares block behavior', async () => {
+    const release = vi.fn(async () => {});
+    stubScratch({
+      [cameraSourceRuntimeKey]: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => frameSource('device-1'),
+          release
+        }))
+      }
+    });
+    const extension = new TurboWarpARExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as ARRuntimeCapabilityV1;
+
+    expect(capability.version).toBe(runtimeCapabilityVersion);
+    expect(capability.requireVersion(1)).toBe(capability);
+    expect(Object.isFrozen(capability)).toBe(true);
+
+    await capability.createARScene('front', 'below-stage');
+    capability.defineARTarget('marker-1');
+    capability.attachSelectorToARTarget('#card', 'marker-1');
+
+    expect(capability.arStatus()).toBe('running');
+    expect(extension.snapshot()).toMatchObject({
+      session: {cameraId: 'front', layer: 'below-stage'},
+      targets: [{id: 'marker-1', attachedSelectors: ['#card']}]
+    });
+
+    capability.detachSelectorFromARTarget('#card');
+    expect(extension.snapshot()).toMatchObject({targets: [{attachedSelectors: []}]});
+
+    await capability.stopARScene();
+    expect(release).toHaveBeenCalledOnce();
+    expect(capability.arStatus()).toBe('idle');
+  });
+
+  it('refuses every capability version but 1', () => {
+    const extension = new TurboWarpARExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as ARRuntimeCapabilityV1;
+
+    expect(extension.arStatus()).toBe('idle');
+    for (const version of [0, 2]) {
+      expect(() => capability.requireVersion(version)).toThrow(
+        `Unsupported TurboWarp AR runtime capability version: ${version}; supported version is 1.`
+      );
+    }
+  });
+
+  it('keeps a block layer inside the vocabulary the background understands', async () => {
+    stubScratch({
+      [cameraSourceRuntimeKey]: {
+        acquireCamera: vi.fn(async () => ({
+          getFrameSource: () => frameSource('device-1'),
+          release: vi.fn(async () => {})
+        }))
+      }
+    });
+
+    const unknownLayer = new TurboWarpARExtension();
+    await unknownLayer.createARScene({CAMERA_ID: 'pose', LAYER: 'camera-under-3d'});
+    expect(unknownLayer.snapshot()).toMatchObject({session: {layer: 'above-stage'}});
+
+    const belowStage = new TurboWarpARExtension();
+    await belowStage.createARScene({CAMERA_ID: 'pose', LAYER: 'below-stage'});
+    expect(belowStage.snapshot()).toMatchObject({session: {layer: 'below-stage'}});
   });
 });

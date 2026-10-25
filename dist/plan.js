@@ -1,4 +1,9 @@
-export const DEFAULT_AR_LAYER = 'camera-under-3d';
+export const AR_SCENE_LAYERS = Object.freeze([
+    'above-stage',
+    'below-stage'
+]);
+/** Matches the `createARScene` block default, so a planned call and a hand-placed block agree. */
+export const DEFAULT_AR_LAYER = 'above-stage';
 export function normalizeARSceneControl(control) {
     validateARSceneControl(control);
     return {
@@ -44,7 +49,7 @@ export function validateARSceneControl(value) {
         }
     }
     validateOptionalString(control['cameraId'], 'ar.cameraId');
-    validateOptionalString(control['layer'], 'ar.layer');
+    validateLayer(control['layer']);
     const targets = control['targets'];
     if (targets === undefined)
         return;
@@ -70,6 +75,14 @@ function validateARTargetBinding(value, path) {
     }
     if (typeof target['selector'] !== 'string' || target['selector'].trim().length === 0) {
         throw new TypeError(`TurboWarp AR ${path}.selector must be a non-empty string.`);
+    }
+}
+function validateLayer(value) {
+    if (value === undefined)
+        return;
+    validateOptionalString(value, 'ar.layer');
+    if (!AR_SCENE_LAYERS.includes(value)) {
+        throw new TypeError(`TurboWarp AR scene control ar.layer must be one of ${AR_SCENE_LAYERS.join(', ')}.`);
     }
 }
 function validateOptionalString(value, path) {
