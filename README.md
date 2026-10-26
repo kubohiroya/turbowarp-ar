@@ -284,6 +284,7 @@ The extension ID is `kubohiroyaar`. Changing the extension ID or opcode names re
 The shared data-editor is a development dependency. The canonical pure number parser is bundled at build time; distributed JavaScript and `./plan` do not require an installed data-editor. Schema compilation, Ajv, and form rendering belong to the common GUI, and the build rejects these engines in the runtime bundle.
 
 ```bash
+npm install --global corepack@latest
 corepack enable
 pnpm install --frozen-lockfile
 pnpm run check
