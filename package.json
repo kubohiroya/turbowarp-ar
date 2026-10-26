@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-ar",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "A TurboWarp extension for camera-source based AR target state.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -65,9 +65,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@kubohiroya/turbowarp-camera-source": "^0.19.4",
+    "@kubohiroya/turbowarp-camera-source": "^0.20.0",
     "@kubohiroya/turbowarp-extension-manifest": "^0.3.2",
-    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.6.1",
+    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.8.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
     "typescript": "^5.9.3",
@@ -75,11 +75,11 @@
     "vite": "^8.2.2",
     "vitest": "^4.1.10",
     "react-dom": "18.3.1",
-    "@kubohiroya/turbowarp-extension-data-editor": "^0.3.3"
+    "@kubohiroya/turbowarp-extension-data-editor": "^0.3.4"
   },
-  "gitHead": "43b7fe4b32641dd62c8ae3503b4fc83c0d4b9e6b",
+  "gitHead": "0d616d6361eade6043af243aa568ba4a2d308482",
   "x-turbowarp-source": {
-    "revision": "43b7fe4b32641dd62c8ae3503b4fc83c0d4b9e6b",
+    "revision": "0d616d6361eade6043af243aa568ba4a2d308482",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
   }
