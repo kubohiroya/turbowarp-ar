@@ -878,6 +878,101 @@
           },
           "shadow": false,
           "topLevel": false
+        },
+        "clear-hat": {
+          "opcode": "event_whenkeypressed",
+          "parent": null,
+          "next": "clear-cube",
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": [
+              "c",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 520,
+          "y": 430
+        },
+        "clear-cube": {
+          "opcode": "turbowarpaframe_deleteSelector",
+          "parent": "clear-hat",
+          "next": "clear-count",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-count": {
+          "opcode": "data_setvariableto",
+          "parent": "clear-cube",
+          "next": "clear-action",
+          "inputs": {
+            "VALUE": [
+              3,
+              "clear-reporter",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Cubes",
+              "cube-count"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-reporter": {
+          "opcode": "turbowarpaframe_countSelector",
+          "parent": "clear-count",
+          "next": null,
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-action": {
+          "opcode": "data_setvariableto",
+          "parent": "clear-count",
+          "next": null,
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Cube removed (C)"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Action",
+              "action"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
         }
       },
       "comments": {},

@@ -12,9 +12,9 @@ TurboWarp-AR puts a shared camera image behind the TurboWarp stage and keeps nam
 
 [Open in TurboWarp Editor](https://turbowarp.org/editor?project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-ar%2Fsamples%2Fmanual-ar-target.sb3) · [SB3](https://kubohiroya.github.io/turbowarp-ar/samples/manual-ar-target.sb3)
 
-Select “Run extension without sandbox” and Allow for each embedded extension. Green flag creates one cube; Space moves the manual target to x=0.75 and hides it. Green flag resets the scene.
+Select “Run extension without sandbox” and Allow for each embedded extension. Green flag creates one cube; Space moves the manual target to x=0.75 and hides it. C removes the cube; green flag resets the scene.
 
-Requires a WebGL browser and access to jsDelivr for A-Frame 1.8.0. Stop leaves the rendered scene visible; running again replaces it. This demo uses the manual pose store; it does not start a camera or detect markers. No camera permission is needed. The tested A-Frame companion extension is embedded in the SB3.
+Requires a WebGL browser and access to jsDelivr for A-Frame 1.8.0. Stop and C leave the rendering canvas active. Close the tab to end GPU rendering; there is currently no scene shutdown block. Running again replaces the previous scene. This demo uses the manual pose store; it does not start a camera or detect markers. No camera permission is needed. The tested A-Frame companion extension is embedded in the SB3.
 
 [Source and regeneration](samples/README.md)
 
