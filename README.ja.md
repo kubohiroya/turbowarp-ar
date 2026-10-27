@@ -8,6 +8,16 @@ TurboWarp-AR は、共有カメラの映像を TurboWarp ステージの背面�
 
 **まだ何も追跡していません。** target の pose と visibility は、マーカー検出や WebXR ではなく、作品がブロックで手入力した値です。実 provider を書く前に API 境界を固定するためにブロックだけが先にあります。provider が入るまでは、この拡張は「カメラ背景＋名前付き pose ストア」だと考えてください。
 
+## 最小デモ
+
+[TurboWarp Editorで開く](https://turbowarp.org/editor?project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-ar%2Fsamples%2Fmanual-ar-target.sb3) · [SB3](https://kubohiroya.github.io/turbowarp-ar/samples/manual-ar-target.sb3)
+
+読み込み時に同梱拡張の「Run extension without sandbox」を選びAllow。緑の旗で立方体を作り、Spaceでターゲットをx=0.75へ移動して非表示にします。Cキーで立方体を削除し、再度緑の旗で初期状態に戻ります。
+
+WebGL対応ブラウザとjsDelivrへの接続が必要です。A-Frame 1.8.0を本体が読み込みます。停止ボタンやCキー後も描画キャンバスは残り、GPU描画の終了にはタブを閉じてください。シーン全体の終了ブロックは現在ありません。再実行時に旧シーンを置き換えます。 このデモは手動姿勢ストアを扱い、マーカー検出・カメラ起動は行いません。カメラ許可は不要です。 検証済みA-Frame拡張もSB3に同梱しています。
+
+[編集・再生成手順](samples/README.md)
+
 ## できること
 
 - 名前付き shared camera を lease してセッションを開始・停止し、その映像を背景レイヤとして設置します。

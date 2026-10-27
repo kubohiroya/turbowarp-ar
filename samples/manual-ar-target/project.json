@@ -1,0 +1,1080 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {
+        "sample-state": [
+          "State",
+          ""
+        ],
+        "cube-count": [
+          "Cubes",
+          ""
+        ],
+        "action": [
+          "Action",
+          ""
+        ],
+        "target-visible": [
+          "Manual target visible",
+          ""
+        ],
+        "target-x": [
+          "Target x",
+          ""
+        ]
+      },
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "b1": {
+          "opcode": "event_whenflagclicked",
+          "parent": null,
+          "next": "b2",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 35,
+          "y": 35
+        },
+        "b2": {
+          "opcode": "data_setvariableto",
+          "parent": "b1",
+          "next": "b3",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Running"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "State",
+              "sample-state"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b3": {
+          "opcode": "turbowarpaframe_createScene",
+          "parent": "b2",
+          "next": "b4",
+          "inputs": {
+            "LAYER": [
+              1,
+              [
+                10,
+                "above-stage"
+              ]
+            ],
+            "MODE": [
+              1,
+              [
+                10,
+                "3d"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b4": {
+          "opcode": "turbowarpaframe_createNode",
+          "parent": "b3",
+          "next": "b5",
+          "inputs": {
+            "TYPE": [
+              1,
+              [
+                10,
+                "box"
+              ]
+            ],
+            "ID": [
+              1,
+              [
+                10,
+                "sample-cube"
+              ]
+            ],
+            "PARENT": [
+              1,
+              [
+                10,
+                "#scene"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b5": {
+          "opcode": "turbowarpaframe_setPosition",
+          "parent": "b4",
+          "next": "b6",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ],
+            "X": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ],
+            "Y": [
+              1,
+              [
+                10,
+                "1"
+              ]
+            ],
+            "Z": [
+              1,
+              [
+                10,
+                "-3"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b6": {
+          "opcode": "turbowarpaframe_setRotation",
+          "parent": "b5",
+          "next": "b7",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ],
+            "X": [
+              1,
+              [
+                10,
+                "15"
+              ]
+            ],
+            "Y": [
+              1,
+              [
+                10,
+                "35"
+              ]
+            ],
+            "Z": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b7": {
+          "opcode": "turbowarpaframe_setAttribute",
+          "parent": "b6",
+          "next": "b8",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ],
+            "NAME": [
+              1,
+              [
+                10,
+                "color"
+              ]
+            ],
+            "VALUE": [
+              1,
+              [
+                10,
+                "#4cffb0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b8": {
+          "opcode": "turbowarpaframe_setAttribute",
+          "parent": "b7",
+          "next": "b9",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#scene"
+              ]
+            ],
+            "NAME": [
+              1,
+              [
+                10,
+                "embedded"
+              ]
+            ],
+            "VALUE": [
+              1,
+              [
+                10,
+                "true"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b9": {
+          "opcode": "turbowarpaframe_setAttribute",
+          "parent": "b8",
+          "next": "b10",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#scene"
+              ]
+            ],
+            "NAME": [
+              1,
+              [
+                10,
+                "vr-mode-ui"
+              ]
+            ],
+            "VALUE": [
+              1,
+              [
+                10,
+                "enabled: false"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b10": {
+          "opcode": "turbowarpaframe_setAttribute",
+          "parent": "b9",
+          "next": "b11",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#scene"
+              ]
+            ],
+            "NAME": [
+              1,
+              [
+                10,
+                "background"
+              ]
+            ],
+            "VALUE": [
+              1,
+              [
+                10,
+                "color: #182438"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b11": {
+          "opcode": "kubohiroyaar_defineARTarget",
+          "parent": "b10",
+          "next": "b12",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b12": {
+          "opcode": "kubohiroyaar_attachSelectorToARTarget",
+          "parent": "b11",
+          "next": "b13",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ],
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b13": {
+          "opcode": "kubohiroyaar_setARTargetPosition",
+          "parent": "b12",
+          "next": "b14",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "X": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ],
+            "Y": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ],
+            "Z": [
+              1,
+              [
+                4,
+                "-3"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b14": {
+          "opcode": "kubohiroyaar_setARTargetRotation",
+          "parent": "b13",
+          "next": "b15",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "X": [
+              1,
+              [
+                4,
+                "15"
+              ]
+            ],
+            "Y": [
+              1,
+              [
+                4,
+                "35"
+              ]
+            ],
+            "Z": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b15": {
+          "opcode": "kubohiroyaar_setARTargetVisible",
+          "parent": "b14",
+          "next": "b17",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "VISIBLE": [
+              3,
+              "b16",
+              [
+                10,
+                ""
+              ]
+            ],
+            "CONFIDENCE": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b16": {
+          "opcode": "operator_equals",
+          "parent": "b15",
+          "next": null,
+          "inputs": {
+            "OPERAND1": [
+              1,
+              [
+                10,
+                "1"
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                10,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b17": {
+          "opcode": "data_setvariableto",
+          "parent": "b15",
+          "next": "b19",
+          "inputs": {
+            "VALUE": [
+              3,
+              "b18",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Manual target visible",
+              "target-visible"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b18": {
+          "opcode": "kubohiroyaar_isARTargetVisible",
+          "parent": "b17",
+          "next": null,
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b19": {
+          "opcode": "data_setvariableto",
+          "parent": "b17",
+          "next": "b21",
+          "inputs": {
+            "VALUE": [
+              3,
+              "b20",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Target x",
+              "target-x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b20": {
+          "opcode": "kubohiroyaar_arTargetPosition",
+          "parent": "b19",
+          "next": null,
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "AXIS": [
+              1,
+              [
+                10,
+                "x"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b21": {
+          "opcode": "data_setvariableto",
+          "parent": "b19",
+          "next": "b23",
+          "inputs": {
+            "VALUE": [
+              3,
+              "b22",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Cubes",
+              "cube-count"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b22": {
+          "opcode": "turbowarpaframe_countSelector",
+          "parent": "b21",
+          "next": null,
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b23": {
+          "opcode": "data_setvariableto",
+          "parent": "b21",
+          "next": "b24",
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Space: hide target"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Action",
+              "action"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b24": {
+          "opcode": "data_setvariableto",
+          "parent": "b23",
+          "next": null,
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Ready"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "State",
+              "sample-state"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b25": {
+          "opcode": "event_whenkeypressed",
+          "parent": null,
+          "next": "b26",
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": [
+              "space",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 520,
+          "y": 35
+        },
+        "b26": {
+          "opcode": "kubohiroyaar_setARTargetPosition",
+          "parent": "b25",
+          "next": "b27",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "X": [
+              1,
+              [
+                4,
+                "0.75"
+              ]
+            ],
+            "Y": [
+              1,
+              [
+                4,
+                "1"
+              ]
+            ],
+            "Z": [
+              1,
+              [
+                4,
+                "-3"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b27": {
+          "opcode": "kubohiroyaar_setARTargetVisible",
+          "parent": "b26",
+          "next": "b29",
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "VISIBLE": [
+              3,
+              "b28",
+              [
+                10,
+                ""
+              ]
+            ],
+            "CONFIDENCE": [
+              1,
+              [
+                4,
+                "0"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b28": {
+          "opcode": "operator_equals",
+          "parent": "b27",
+          "next": null,
+          "inputs": {
+            "OPERAND1": [
+              1,
+              [
+                10,
+                "0"
+              ]
+            ],
+            "OPERAND2": [
+              1,
+              [
+                10,
+                "1"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b29": {
+          "opcode": "data_setvariableto",
+          "parent": "b27",
+          "next": "b31",
+          "inputs": {
+            "VALUE": [
+              3,
+              "b30",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Manual target visible",
+              "target-visible"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b30": {
+          "opcode": "kubohiroyaar_isARTargetVisible",
+          "parent": "b29",
+          "next": null,
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b31": {
+          "opcode": "data_setvariableto",
+          "parent": "b29",
+          "next": "b33",
+          "inputs": {
+            "VALUE": [
+              3,
+              "b32",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Target x",
+              "target-x"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b32": {
+          "opcode": "kubohiroyaar_arTargetPosition",
+          "parent": "b31",
+          "next": null,
+          "inputs": {
+            "TARGET_ID": [
+              1,
+              [
+                10,
+                "manual-target"
+              ]
+            ],
+            "AXIS": [
+              1,
+              [
+                10,
+                "x"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b33": {
+          "opcode": "data_setvariableto",
+          "parent": "b31",
+          "next": null,
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Target moved and hidden"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Action",
+              "action"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-hat": {
+          "opcode": "event_whenkeypressed",
+          "parent": null,
+          "next": "clear-cube",
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": [
+              "c",
+              null
+            ]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 520,
+          "y": 430
+        },
+        "clear-cube": {
+          "opcode": "turbowarpaframe_deleteSelector",
+          "parent": "clear-hat",
+          "next": "clear-count",
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-count": {
+          "opcode": "data_setvariableto",
+          "parent": "clear-cube",
+          "next": "clear-action",
+          "inputs": {
+            "VALUE": [
+              3,
+              "clear-reporter",
+              [
+                10,
+                ""
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Cubes",
+              "cube-count"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-reporter": {
+          "opcode": "turbowarpaframe_countSelector",
+          "parent": "clear-count",
+          "next": null,
+          "inputs": {
+            "SELECTOR": [
+              1,
+              [
+                10,
+                "#sample-cube"
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "clear-action": {
+          "opcode": "data_setvariableto",
+          "parent": "clear-count",
+          "next": null,
+          "inputs": {
+            "VALUE": [
+              1,
+              [
+                10,
+                "Cube removed (C)"
+              ]
+            ]
+          },
+          "fields": {
+            "VARIABLE": [
+              "Action",
+              "action"
+            ]
+          },
+          "shadow": false,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "",
+          "name": "Instructions",
+          "bitmapResolution": 1,
+          "md5ext": "backdrop.svg",
+          "dataFormat": "svg",
+          "rotationCenterX": 240,
+          "rotationCenterY": 180
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoTransparency": 50,
+      "videoState": "off",
+      "textToSpeechLanguage": null
+    }
+  ],
+  "monitors": [
+    {
+      "id": "cube-count",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Cubes"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 18,
+      "y": 115,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "action",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Action"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 18,
+      "y": 148,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "target-visible",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Manual target visible"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 18,
+      "y": 181,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "target-x",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Target x"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 18,
+      "y": 214,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    }
+  ],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TurboWarp Plus minimal samples"
+  }
+}
