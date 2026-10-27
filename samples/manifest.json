@@ -1,0 +1,39 @@
+{
+  "baseURL": "https://kubohiroya.github.io/turbowarp-ar/",
+  "extension": {
+    "id": "kubohiroyaar",
+    "bundle": "dist/ar.js",
+    "unsandboxed": true,
+    "dependencies": [
+      {
+        "id": "turbowarpaframe",
+        "bundle": "samples/dependencies/turbowarp-aframe.js",
+        "sha256": "6f984c03eeb7943f1497290e22a156ab7e52a90897ac0e2c181ac816aed43f60"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "name": "manual-ar-target",
+      "title": "Manual AR target",
+      "checks": [
+        {
+          "variable": "cube-count",
+          "equals": 1
+        },
+        {
+          "variable": "target-visible",
+          "equals": true
+        },
+        {
+          "variable": "target-x",
+          "equals": 0
+        }
+      ],
+      "keyCheck": {
+        "variable": "action",
+        "equals": "Target moved and hidden"
+      }
+    }
+  ]
+}
