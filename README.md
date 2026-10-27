@@ -32,13 +32,13 @@ TurboWarp-AR does not upload camera frames or store images. Camera access is del
 Load `turbowarp-camera-source` first, then load this extension as an unsandboxed custom extension.
 
 ```text
-https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.5.0/dist/ar.js
+https://cdn.jsdelivr.net/npm/@kubohiroya/turbowarp-ar@0.6.0/dist/ar.js
 ```
 
 For local development:
 
 ```bash
-pnpm add @kubohiroya/turbowarp-ar@0.5.0
+pnpm add @kubohiroya/turbowarp-ar@0.6.0
 ```
 
 ## Quick start
