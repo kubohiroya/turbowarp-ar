@@ -61,7 +61,7 @@ it('actual common service protects duplicates and leaves the first registration 
  const service=createBlockEditorService({fixedInputs:true});const host={gui:{blockEditors:service.api}};const remove=registerFixedInputEditors(host,fixedInputEditors);expect(()=>registerFixedInputEditors(host,fixedInputEditors)).toThrow();for(const o of fixedInputEditors)for(const op of o.opcodes)expect(service.registry.resolve(op)?.editorId).toBe(o.editorId);remove();remove();for(const o of fixedInputEditors)expect(service.registry.resolve(o.opcodes[0]!)).toBeUndefined();
 });
 it('runtime exit and repeated dispose unregister once, and failed partial registration rolls back',()=>{
- const listeners=new Set<()=>void>();let removed=0;const host={gui:{blockEditors:{apiVersion:1,registerFixedInputEditor:()=>()=>{removed++;}}},vm:{runtime:{on:(_e:string,f:()=>void)=>listeners.add(f),off:(_e:string,f:()=>void)=>listeners.delete(f)}}};const remove=registerFixedInputEditors(host,fixedInputEditors);for(const f of [...listeners])f();remove();expect(removed).toBe(fixedInputEditors.length);expect(listeners.size).toBe(0);
+ const listeners=new Set<()=>void>();let removed=0;const host={gui:{blockEditors:{apiVersion:1,registerFixedInputEditor:()=>()=>{removed++;}}},vm:{runtime:{on:(e:string,f:()=>void)=>{if(e==='RUNTIME_DISPOSED'||e==='PROJECT_LOADED')listeners.add(f);},off:(_e:string,f:()=>void)=>listeners.delete(f)}}};const remove=registerFixedInputEditors(host,fixedInputEditors);for(const f of [...listeners].slice(0,1))f();remove();expect(removed).toBe(fixedInputEditors.length);expect(listeners.size).toBe(0);
  let calls=0;let cleaned=0;const broken={gui:{blockEditors:{apiVersion:1,registerFixedInputEditor:()=>{if(++calls===2)throw Error('second failed');return()=>{cleaned++;};}}}};expect(()=>registerFixedInputEditors(broken,[fixedInputEditors[0]!,fixedInputEditors[0]!])).toThrow();expect(cleaned).toBe(1);
 });
 it('the stable docsURI block anchors contain fixed-form help and the generated Schema equals the canonical source',()=>{
@@ -81,6 +81,23 @@ it('actual constructor registers only existing getInfo opcodes once and runtime 
  const service=createBlockEditorService({fixedInputs:true});const host=scratchHost(service.api);vi.stubGlobal('Scratch',host);
  try {const instance=new TurboWarpARExtension();const info=instance.getInfo();expect(instance.getInfo()).toEqual(info);const opcodes=new Set((info.blocks as Array<{opcode:string}>).map(b=>b.opcode));for(const o of fixedInputEditors)expect(Boolean(service.registry.resolve(o.opcodes[0]!))).toBe(opcodes.has(o.opcodes[0]!.slice(o.extensionId.length+1)));for(const f of [...host.callbacks.get('RUNTIME_DISPOSED')??[]])f();for(const o of fixedInputEditors)expect(service.registry.resolve(o.opcodes[0]!)).toBeUndefined();}
  finally {vi.unstubAllGlobals();}
+});
+
+it('registers the same fixed editors again after each project load until the owner disposes',()=>{
+ // vm.loadProject disposes the runtime but keeps the extension loaded.
+ const service=createBlockEditorService({fixedInputs:true});const host=scratchHost(service.api);vi.stubGlobal('Scratch',host);
+ const emit=(event:string)=>{for(const f of [...host.callbacks.get(event)??[]])f();};
+ const registered=()=>fixedInputEditors.filter(o=>service.registry.resolve(o.opcodes[0]!)?.editorId===o.editorId).length;
+ try {
+  const instance=new TurboWarpARExtension();expect(registered()).toBe(fixedInputEditors.length);
+  emit('RUNTIME_DISPOSED');expect(registered()).toBe(0);
+  emit('PROJECT_LOADED');expect(registered()).toBe(fixedInputEditors.length);
+  // The common registry throws on a duplicate, so a second load must not register again.
+  expect(()=>emit('PROJECT_LOADED')).not.toThrow();expect(registered()).toBe(fixedInputEditors.length);
+  instance.dispose();expect(registered()).toBe(0);
+  expect(host.callbacks.get('RUNTIME_DISPOSED')?.size??0).toBe(0);expect(host.callbacks.get('PROJECT_LOADED')?.size??0).toBe(0);
+  emit('RUNTIME_DISPOSED');emit('PROJECT_LOADED');expect(registered()).toBe(0);
+ } finally {vi.unstubAllGlobals();}
 });
 
 it('matches owner numeric range boundaries without strengthening clamp or runtime-only preconditions',()=>{
