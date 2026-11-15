@@ -107,20 +107,40 @@ export function registerFixedInputEditors(
   if (!definitions.length || api?.apiVersion !== 1 || typeof api.registerFixedInputEditor !== 'function') return () => {};
   const runtime = runtimeOverride ?? host.vm?.runtime;
   const removers: (() => void)[] = [];
-  let active = true;
-  const dispose = () => {
-    if (!active) return;
-    active = false;
-    runtime?.off?.('RUNTIME_DISPOSED', dispose);
+  // Loading a project disposes the runtime but keeps this extension loaded, so
+  // RUNTIME_DISPOSED only releases the editors until the next PROJECT_LOADED.
+  let state: 'registered' | 'released' | 'disposed' = 'registered';
+  const release = () => {
     for (const remove of removers.splice(0).reverse()) remove();
   };
-  try {
-    for (const definition of definitions) {
-      const remove = api.registerFixedInputEditor.call(api, definition);
-      if (typeof remove !== 'function') throw new TypeError('Invalid fixed input registration disposer.');
-      removers.push(remove);
-    }
-    runtime?.on?.('RUNTIME_DISPOSED', dispose);
-  } catch (error) {dispose(); throw error;}
+  const register = () => {
+    try {
+      for (const definition of definitions) {
+        const remove = api.registerFixedInputEditor!.call(api, definition);
+        if (typeof remove !== 'function') throw new TypeError('Invalid fixed input registration disposer.');
+        removers.push(remove);
+      }
+    } catch (error) {release(); throw error;}
+  };
+  const releaseForRuntimeDispose = () => {
+    if (state !== 'registered') return;
+    state = 'released';
+    release();
+  };
+  const restoreAfterProjectLoad = () => {
+    if (state !== 'released') return;
+    register();
+    state = 'registered';
+  };
+  const dispose = () => {
+    if (state === 'disposed') return;
+    state = 'disposed';
+    runtime?.off?.('RUNTIME_DISPOSED', releaseForRuntimeDispose);
+    runtime?.off?.('PROJECT_LOADED', restoreAfterProjectLoad);
+    release();
+  };
+  register();
+  runtime?.on?.('RUNTIME_DISPOSED', releaseForRuntimeDispose);
+  runtime?.on?.('PROJECT_LOADED', restoreAfterProjectLoad);
   return dispose;
 }
