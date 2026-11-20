@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-ar",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "A TurboWarp extension for camera-source based AR target state.",
   "author": {
     "name": "Hiroya Kubo",
@@ -89,5 +89,23 @@
     "revision": "079c26ada17d08be5cf48419708b11133054656e",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
+  },
+  "turbowarpExtension": {
+    "resourceDeclaration": {
+      "schemaVersion": 1,
+      "resources": [
+        {
+          "type": "camera",
+          "usage": "required",
+          "purpose": {
+            "en": "Display shared camera frames behind the stage",
+            "ja": "共有カメラの映像をステージの背景として表示する"
+          },
+          "via": [
+            "@kubohiroya/turbowarp-camera-source"
+          ]
+        }
+      ]
+    }
   }
 }
